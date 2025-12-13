@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Manager | CD.CRUZHER</title>
+    
+    <!-- 1. Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Load FontAwesome (Icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 3. Load React & ReactDOM from CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- 4. Load Babel (to translate JSX to JS in browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-dark': '#0f172a',
+                        'brand-purple': '#7c3aed',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-white overflow-hidden">
+    <div id="root"></div>
+
+    <!-- 5. The React App Logic -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Helper to safely close script tags in strings without breaking the browser parser
+        const CLOSE_SCRIPT = '<' + '/script>';
+
+        // --- THE WEBSITE TEMPLATE (GENERIC VERSION) ---
+        const INITIAL_TEMPLATE = `<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ID: page-title -->
+    <title id="page-title">My Creative Portfolio</title>
+    <meta name="description" content="Portfolio of a creative developer.">
+    <script src="https://cdn.tailwindcss.com">${CLOSE_SCRIPT}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'], mono: ['Space Grotesk', 'monospace'] },
+                    colors: {
+                        'brand-dark': '#0f172a', 'brand-purple': '#7c3aed', 'brand-blue': '#2563eb',
+                        'brand-accent': '#06b6d4', 'glass-white': 'rgba(255, 255, 255, 0.05)',
+                    },
+                    animation: { 'float': 'float 6s ease-in-out infinite' },
+                    keyframes: { float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-20px)' } } }
+                }
+            }
+        }
+    ${CLOSE_SCRIPT}
+    <style>
+        .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gradient-text { background: linear-gradient(135deg, #60a5fa, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-bg { background-image: radial-gradient(circle at 20% 30%, rgba(124, 58, 237, 0.15) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(6, 182, 212, 0.15) 0%, transparent 40%); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .goog-te-banner-frame { display: none !important; }
+        body { top: 0 !important; }
+        .goog-te-gadget { color: transparent !important; font-size: 0 !important; }
+        .goog-te-gadget span { display: none !important; }
+        .goog-te-combo {
+            background-color: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #cbd5e1;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.875rem;
+            outline: none;
+            cursor: pointer;
+            margin-left: 1rem;
+        }
+        .goog-te-combo:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .goog-logo-link { display: none !important; }
+        #google_translate_element { display: flex; align-items: center; }
+    </style>
+</head>
+<body class="bg-brand-dark text-slate-300 font-sans selection:bg-brand-purple selection:text-white overflow-x-hidden">
+    <nav class="fixed w-full z-50 transition-all duration-300 glass-card border-b border-white/5" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <!-- ID: nav-logo -->
+                    <span id="nav-logo" class="font-mono text-xl font-bold tracking-tighter text-white">MY<span class="text-brand-purple">.</span>PORTFOLIO</span>
+                </div>
+                <div class="hidden md:flex items-center">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="#home" class="hover:text-white transition-colors px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                        <a href="#portfolio" class="hover:text-white transition-colors px-3 py-2 rounded-md text-sm font-medium">Apps</a>
+                        <a href="#about" class="hover:text-white transition-colors px-3 py-2 rounded-md text-sm font-medium">About</a>
+                        <a href="#blog" class="hover:text-white transition-colors px-3 py-2 rounded-md text-sm font-medium">Blog</a>
+                        <a href="#gallery" class="hover:text-white transition-colors px-3 py-2 rounded-md text-sm font-medium">Gallery</a>
+                    </div>
+                    <div id="google_translate_element" class="ml-4"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <section id="home" class="relative min-h-screen flex items-center justify-center pt-16 hero-bg overflow-hidden">
+        <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-brand-purple/20 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col-reverse lg:flex-row items-center">
+            <div class="w-full lg:w-1/2 text-center lg:text-left mt-12 lg:mt-0 z-10">
+                <!-- ID: hero-badge -->
+                <div id="hero-badge" class="inline-block px-3 py-1 mb-4 text-xs font-mono text-brand-accent border border-brand-accent/30 rounded-full bg-brand-accent/5">Welcome to my world</div>
+                <!-- ID: hero-headline -->
+                <h1 id="hero-headline" class="text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight">Creating <br><span class="gradient-text">Digital</span> <br>Experiences.</h1>
+                <!-- ID: hero-desc -->
+                <p id="hero-desc" class="text-xl text-slate-400 mb-8 max-w-lg mx-auto lg:mx-0">I build interactive tools, design visual experiences, and explore the future of the web.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <a href="#portfolio" class="px-8 py-3 bg-white text-brand-dark font-bold rounded-full hover:bg-gray-200 transition-colors">View Projects</a>
+                </div>
+            </div>
+            <div class="w-full lg:w-1/2 flex justify-center z-10">
+                <div class="relative w-72 h-72 lg:w-96 lg:h-96">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-brand-purple to-brand-accent rounded-full opacity-20 animate-float blur-xl"></div>
+                    <div class="relative w-full h-full rounded-2xl overflow-hidden border border-white/10 glass-card p-2 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                        <div class="w-full h-full bg-slate-800 rounded-xl overflow-hidden relative flex items-center justify-center">
+                            <span class="text-6xl text-white/10 font-bold">ME</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="portfolio" class="py-20 bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12">
+                <div><h2 class="text-3xl md:text-4xl font-bold text-white mb-2">My Projects</h2><p class="text-slate-400">A collection of my recent work.</p></div>
+            </div>
+            <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Sample Project (Generic) -->
+                <div class="group glass-card rounded-xl overflow-hidden hover:border-brand-purple/50 transition-all duration-300 hover:-translate-y-1">
+                    <div class="h-48 bg-gradient-to-br from-indigo-900 to-slate-800 flex items-center justify-center relative overflow-hidden"><i class="fas fa-rocket text-5xl text-white/20 group-hover:text-white/40 transition-all"></i></div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-white mb-2 group-hover:text-brand-purple transition-colors">Project One</h3>
+                        <p class="text-slate-400 text-sm mb-4">An amazing application that does something cool.</p>
+                        <a href="#" class="text-brand-purple font-medium text-sm hover:underline">View Details &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="py-20 bg-brand-dark relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="order-2 lg:order-1">
+                     <div class="aspect-video bg-black flex items-center justify-center relative rounded-xl border border-white/10"><i class="fas fa-user text-4xl text-white/50"></i></div>
+                </div>
+                <div class="order-1 lg:order-2 text-left">
+                    <!-- ID: about-title -->
+                    <h2 id="about-title" class="text-4xl md:text-5xl font-bold text-white mt-2 mb-6">About Me</h2>
+                    <!-- ID: latest-thought -->
+                    <div id="latest-thought" class="glass-card p-6 rounded-xl border-l-4 border-brand-purple mt-8">
+                        <div class="flex items-center gap-3 mb-2"><span class="text-xs text-slate-400">Thought of the day</span></div>
+                        <p class="italic text-slate-300">"Creativity is intelligence having fun."</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="gallery" class="py-20 bg-brand-dark">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+             <div class="flex justify-between items-end mb-8">
+                <h2 class="text-3xl md:text-4xl font-bold text-white">Visual Gallery</h2>
+                <a href="#" class="text-slate-400 hover:text-white transition-colors text-sm flex items-center gap-2"><i class="fab fa-instagram"></i> Social Media</a>
+            </div>
+            <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                 <!-- Gallery items will appear here -->
+            </div>
+        </div>
+    </section>
+
+    <section id="blog" class="py-20 bg-slate-900/30">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-8 border-b border-white/10 pb-4">Blog & Updates</h2>
+            <div id="blog-posts" class="space-y-8">
+                <!-- Blog posts will appear here -->
+            </div>
+        </div>
+    </section>
+
+    <section id="guestbook" class="py-12 bg-[#0a0f1c]">
+        <div class="max-w-3xl mx-auto px-4 text-center">
+            <h3 class="text-2xl font-bold text-white mb-6">Guestbook</h3>
+            <div class="glass-card p-8 rounded-xl min-h-[150px] flex flex-col items-center justify-center">
+                <p class="text-slate-400 mb-4">Comments powered by GitHub</p>
+                <div class="giscus"></div>
+                <p class="text-xs text-slate-600 mt-2 font-mono">Configure Giscus in code to enable</p>
+            </div>
+        </div>
+    </section>
+    
+    <footer id="contact" class="bg-[#050810] pt-20 pb-10 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-slate-500 text-sm">
+            <!-- ID: footer-copy -->
+            <p id="footer-copy">© 2025 Your Name. All rights reserved.</p>
+        </div>
+    </footer>
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            addEventListener('click', function (e) { e.preventDefault(); document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' }); });
+        });
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,es,de,fr,it,ja,zh-CN',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    ${CLOSE_SCRIPT}
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit">${CLOSE_SCRIPT}
+</body>
+</html>`;
+
+        function CMSApp() {
+            const [currentHtml, setCurrentHtml] = useState(INITIAL_TEMPLATE);
+            const [activeTab, setActiveTab] = useState('identity'); 
+            const [viewMode, setViewMode] = useState('preview');
+            const [showCopySuccess, setShowCopySuccess] = useState(false);
+
+            // --- FORM STATES ---
+            
+            // 1. Identity Form (New)
+            const [identityForm, setIdentityForm] = useState({
+                siteTitle: 'My Creative Portfolio',
+                logoText: 'MY.PORTFOLIO',
+                heroBadge: 'Welcome to my world',
+                heroHeadline: 'Creating Digital Experiences.',
+                heroDesc: 'I build interactive tools, design visual experiences, and explore the future of the web.',
+                footerText: '© 2025 Your Name. All rights reserved.'
+            });
+
+            // 2. Project Form
+            const [projectForm, setProjectForm] = useState({
+                title: '', description: '', link: '', category: 'Web', icon: 'fas fa-code'
+            });
+
+            // 3. Blog Form
+            const [blogForm, setBlogForm] = useState({
+                title: '',
+                date: new Date().toISOString().split('T')[0],
+                category: 'Update',
+                content: ''
+            });
+
+            // 4. Gallery Form
+            const [galleryForm, setGalleryForm] = useState({
+                imageUrl: '',
+                postLink: ''
+            });
+
+            // --- ACTIONS ---
+
+            // Update Identity / General Settings
+            const handleUpdateIdentity = () => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(currentHtml, 'text/html');
+
+                const safeSet = (id, html) => {
+                    const el = doc.getElementById(id);
+                    if(el) el.innerHTML = html;
+                };
+
+                // Update Title Tag
+                const titleTag = doc.getElementById('page-title');
+                if(titleTag) titleTag.innerText = identityForm.siteTitle;
+
+                safeSet('nav-logo', identityForm.logoText);
+                safeSet('hero-badge', identityForm.heroBadge);
+                safeSet('hero-headline', identityForm.heroHeadline);
+                safeSet('hero-desc', identityForm.heroDesc);
+                safeSet('footer-copy', identityForm.footerText);
+
+                setCurrentHtml(doc.documentElement.outerHTML);
+                alert("Identity updated! Check the preview.");
+            };
+
+            const handleAddProject = () => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(currentHtml, 'text/html');
+                const grid = doc.getElementById('projects-grid');
+
+                if (grid) {
+                    let colorClass = 'text-brand-purple';
+                    let borderClass = 'hover:border-brand-purple/50';
+                    let bgClass = 'from-indigo-900';
+
+                    if (projectForm.category === 'Science') {
+                        colorClass = 'text-brand-accent'; borderClass = 'hover:border-brand-accent/50'; bgClass = 'from-teal-900';
+                    } else if (projectForm.category === 'Tool') {
+                        colorClass = 'text-pink-500'; borderClass = 'hover:border-pink-500/50'; bgClass = 'from-pink-900';
+                    }
+
+                    const newCard = doc.createElement('div');
+                    newCard.className = `group glass-card rounded-xl overflow-hidden ${borderClass} transition-all duration-300 hover:-translate-y-1`;
+                    newCard.innerHTML = `
+                        <div class="h-48 bg-gradient-to-br ${bgClass} to-slate-800 flex items-center justify-center relative overflow-hidden">
+                            <i class="${projectForm.icon} text-5xl text-white/20 group-hover:text-white/40 transition-all"></i>
+                            <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-white mb-2 group-hover:${colorClass} transition-colors">${projectForm.title}</h3>
+                            <p class="text-slate-400 text-sm mb-4">${projectForm.description}</p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex gap-2">
+                                    <span class="text-xs bg-white/5 px-2 py-1 rounded text-slate-400">${projectForm.category}</span>
+                                </div>
+                                <a href="${projectForm.link}" target="_blank" class="${colorClass} font-medium text-sm hover:underline">Launch App &rarr;</a>
+                            </div>
+                        </div>
+                    `;
+                    // Insert at top of grid
+                    grid.insertBefore(newCard, grid.firstChild);
+                    setCurrentHtml(doc.documentElement.outerHTML);
+                    setProjectForm({ ...projectForm, title: '', description: '', link: '' });
+                    alert("Project added to preview!");
+                }
+            };
+
+            const handleAddBlogPost = () => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(currentHtml, 'text/html');
+                const blogContainer = doc.getElementById('blog-posts');
+
+                if (blogContainer) {
+                    const newPost = doc.createElement('article');
+                    newPost.className = "glass-card p-6 rounded-xl border border-white/5 hover:bg-white/5 transition-colors mb-8";
+                    const dateObj = new Date(blogForm.date);
+                    const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                    newPost.innerHTML = `
+                        <div class="flex items-center gap-4 mb-3 text-xs text-slate-500">
+                            <span class="text-brand-accent">${blogForm.category}</span>
+                            <span>•</span>
+                            <span>${dateStr}</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">${blogForm.title}</h3>
+                        <div class="text-slate-400 leading-relaxed whitespace-pre-line">
+                            ${blogForm.content}
+                        </div>
+                    `;
+
+                    blogContainer.insertBefore(newPost, blogContainer.firstChild);
+                    setCurrentHtml(doc.documentElement.outerHTML);
+                    setBlogForm({...blogForm, title: '', content: ''});
+                    alert("Blog post published!");
+                }
+            };
+
+            const handleAddPhoto = () => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(currentHtml, 'text/html');
+                const galleryGrid = doc.getElementById('gallery-grid');
+
+                if (galleryGrid) {
+                    const newPhoto = doc.createElement('a');
+                    newPhoto.href = galleryForm.postLink || '#';
+                    newPhoto.target = "_blank";
+                    newPhoto.className = "block relative aspect-square rounded-xl overflow-hidden group border border-white/5";
+                    
+                    newPhoto.innerHTML = `
+                        <img src="${galleryForm.imageUrl}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Insta Post">
+                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <i class="fab fa-instagram text-3xl text-white"></i>
+                        </div>
+                    `;
+                    
+                    galleryGrid.insertBefore(newPhoto, galleryGrid.firstChild);
+                    setCurrentHtml(doc.documentElement.outerHTML);
+                    setGalleryForm({ imageUrl: '', postLink: '' });
+                    alert("Photo added to Visual Journal!");
+                }
+            }
+
+            const copyToClipboard = () => {
+                const finalCode = currentHtml;
+                const textArea = document.createElement("textarea");
+                textArea.value = finalCode;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-9999px";
+                textArea.style.top = "0";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        setShowCopySuccess(true);
+                        setTimeout(() => setShowCopySuccess(false), 2000);
+                    }
+                } catch (err) { console.error('Fallback failed', err); }
+                document.body.removeChild(textArea);
+            };
+
+            return (
+                <div className="flex h-screen bg-slate-900 text-white font-sans overflow-hidden">
+                    
+                    {/* Sidebar */}
+                    <div className="w-80 md:w-96 bg-slate-950 border-r border-slate-800 flex flex-col shadow-xl z-20">
+                        <div className="p-6 border-b border-slate-800">
+                            <h1 className="text-xl font-bold flex items-center gap-2">
+                                <i className="fas fa-terminal text-brand-purple"></i>
+                                Static CMS
+                            </h1>
+                            <p className="text-xs text-slate-500 mt-1">Universal Website Manager</p>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex border-b border-slate-800">
+                             <button onClick={() => setActiveTab('identity')} className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${activeTab === 'identity' ? 'bg-slate-900 text-green-400 border-b-2 border-green-400' : 'text-slate-500 hover:text-slate-300'}`}>
+                                <i className="fas fa-user-circle"></i> Identity
+                            </button>
+                            <button onClick={() => setActiveTab('write-blog')} className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${activeTab === 'write-blog' ? 'bg-slate-900 text-purple-400 border-b-2 border-purple-400' : 'text-slate-500 hover:text-slate-300'}`}>
+                                <i className="fas fa-pen-nib"></i> Blog
+                            </button>
+                            <button onClick={() => setActiveTab('add-project')} className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${activeTab === 'add-project' ? 'bg-slate-900 text-blue-400 border-b-2 border-blue-400' : 'text-slate-500 hover:text-slate-300'}`}>
+                                <i className="fas fa-plus"></i> App
+                            </button>
+                             <button onClick={() => setActiveTab('add-photo')} className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${activeTab === 'add-photo' ? 'bg-slate-900 text-pink-400 border-b-2 border-pink-400' : 'text-slate-500 hover:text-slate-300'}`}>
+                                <i className="fas fa-image"></i>
+                            </button>
+                        </div>
+
+                        {/* Forms */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            
+                            {/* IDENTITY FORM (New) */}
+                            {activeTab === 'identity' && (
+                                <div className="space-y-4">
+                                    <h2 className="text-lg font-semibold text-slate-300">Profile & Settings</h2>
+                                    <p className="text-xs text-slate-500">Customize the main text on your site.</p>
+                                    
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Website Title (Browser Tab)</label>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-green-500 focus:outline-none"
+                                            value={identityForm.siteTitle} onChange={(e) => setIdentityForm({...identityForm, siteTitle: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Logo Text</label>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-green-500 focus:outline-none"
+                                            value={identityForm.logoText} onChange={(e) => setIdentityForm({...identityForm, logoText: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Hero Badge (Small Text)</label>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-green-500 focus:outline-none"
+                                            value={identityForm.heroBadge} onChange={(e) => setIdentityForm({...identityForm, heroBadge: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Hero Headline (HTML allowed)</label>
+                                        <textarea className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-green-500 focus:outline-none h-20"
+                                            value={identityForm.heroHeadline} onChange={(e) => setIdentityForm({...identityForm, heroHeadline: e.target.value})}></textarea>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Main Description</label>
+                                        <textarea className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-green-500 focus:outline-none h-24"
+                                            value={identityForm.heroDesc} onChange={(e) => setIdentityForm({...identityForm, heroDesc: e.target.value})}></textarea>
+                                    </div>
+                                     <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Footer Copyright</label>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-green-500 focus:outline-none"
+                                            value={identityForm.footerText} onChange={(e) => setIdentityForm({...identityForm, footerText: e.target.value})} />
+                                    </div>
+
+                                    <button onClick={handleUpdateIdentity} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2">
+                                        <i className="fas fa-save"></i> Update Profile
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* GALLERY FORM */}
+                            {activeTab === 'add-photo' && (
+                                <div className="space-y-4">
+                                    <h2 className="text-lg font-semibold text-slate-300">Add Instagram Photo</h2>
+                                    <p className="text-xs text-slate-500">Image URL required.</p>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Image URL (jpg/png)</label>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-pink-500 focus:outline-none text-slate-300 font-mono"
+                                            value={galleryForm.imageUrl} onChange={(e) => setGalleryForm({...galleryForm, imageUrl: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Post Link (Optional)</label>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-pink-500 focus:outline-none text-slate-300"
+                                            value={galleryForm.postLink} onChange={(e) => setGalleryForm({...galleryForm, postLink: e.target.value})} />
+                                    </div>
+                                    <button onClick={handleAddPhoto} disabled={!galleryForm.imageUrl} className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50">
+                                        <i className="fas fa-plus"></i> Add to Grid
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* BLOG FORM */}
+                            {activeTab === 'write-blog' && (
+                                <div className="space-y-4">
+                                    <h2 className="text-lg font-semibold text-slate-300">Write New Post</h2>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Title</label>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-purple-500 focus:outline-none"
+                                            value={blogForm.title} onChange={(e) => setBlogForm({...blogForm, title: e.target.value})} />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <div className="space-y-1 flex-1">
+                                            <label className="text-xs text-slate-500 uppercase">Date</label>
+                                            <input type="date" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-purple-500 focus:outline-none text-slate-400"
+                                                value={blogForm.date} onChange={(e) => setBlogForm({...blogForm, date: e.target.value})} />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Content (HTML allowed)</label>
+                                        <textarea className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-purple-500 focus:outline-none h-40 font-mono"
+                                            value={blogForm.content} onChange={(e) => setBlogForm({...blogForm, content: e.target.value})}></textarea>
+                                    </div>
+                                    <button onClick={handleAddBlogPost} disabled={!blogForm.title || !blogForm.content} className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50">
+                                        <i className="fas fa-pen-nib"></i> Publish
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* PROJECT FORM */}
+                            {activeTab === 'add-project' && (
+                                <div className="space-y-4">
+                                    <h2 className="text-lg font-semibold text-slate-300">Add Project</h2>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">App Title</label>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-blue-500 focus:outline-none"
+                                            value={projectForm.title} onChange={(e) => setProjectForm({...projectForm, title: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Description</label>
+                                        <textarea className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-blue-500 focus:outline-none h-20"
+                                            value={projectForm.description} onChange={(e) => setProjectForm({...projectForm, description: e.target.value})}></textarea>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Link URL</label>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-blue-500 focus:outline-none"
+                                            value={projectForm.link} onChange={(e) => setProjectForm({...projectForm, link: e.target.value})} />
+                                    </div>
+                                    <button onClick={handleAddProject} disabled={!projectForm.title || !projectForm.link} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50">
+                                        <i className="fas fa-plus"></i> Add to Grid
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Preview */}
+                    <div className="flex-1 flex flex-col h-full relative">
+                        <div className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6">
+                            <div className="flex items-center gap-4 bg-slate-800 p-1 rounded-lg">
+                                <button onClick={() => setViewMode('preview')} className={`px-4 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all ${viewMode === 'preview' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
+                                    <i className="fas fa-eye"></i> Preview
+                                </button>
+                                <button onClick={() => setViewMode('code')} className={`px-4 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all ${viewMode === 'code' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
+                                    <i className="fas fa-code"></i> Code
+                                </button>
+                            </div>
+                            <button onClick={copyToClipboard} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${showCopySuccess ? 'bg-green-500 text-white' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}>
+                                {showCopySuccess ? <i className="fas fa-check"></i> : <i className="fas fa-copy"></i>}
+                                {showCopySuccess ? 'Copied!' : 'Copy Code'}
+                            </button>
+                        </div>
+                        <div className="flex-1 bg-black relative overflow-hidden">
+                            {viewMode === 'preview' ? (
+                                <iframe title="Site Preview" srcDoc={currentHtml} className="w-full h-full border-0" sandbox="allow-scripts"></iframe>
+                            ) : (
+                                <textarea className="w-full h-full bg-[#1e1e1e] text-slate-300 font-mono text-sm p-6 resize-none focus:outline-none" value={currentHtml} readOnly></textarea>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<CMSApp />);
+    </script>
+</body>
+</html>

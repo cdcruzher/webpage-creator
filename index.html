@@ -630,7 +630,7 @@
                         </div>
                         <div className="flex-1 bg-black relative overflow-hidden">
                             {viewMode === 'preview' ? (
-                                <iframe ref={iframeRef} title="Site Preview" srcDoc={currentHtml} className="w-full h-full border-0" sandbox="allow-scripts"></iframe>
+                                <iframe ref={iframeRef} title="Site Preview" srcDoc={currentHtml} className="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-modals"></iframe>
                             ) : (
                                 <textarea className="w-full h-full bg-[#1e1e1e] text-slate-300 font-mono text-sm p-6 resize-none focus:outline-none" value={currentHtml} readOnly></textarea>
                             )}

@@ -1,12 +1,60 @@
-<html lang="en" class="scroll-smooth"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Manager | CD.CRUZHER</title>
+    
+    <!-- 1. Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Load FontAwesome (Icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 3. Load React & ReactDOM from CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- 4. Load Babel (to translate JSX to JS in browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-dark': '#0f172a',
+                        'brand-purple': '#7c3aed',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-white overflow-hidden">
+    <div id="root"></div>
+
+    <!-- 5. The React App Logic -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const CLOSE_SCRIPT = '<' + '/script>';
+
+        // --- THE WEBSITE TEMPLATE ---
+        // Added id="tailwind-config" for easy color updating
+        // Added Custom Language Switcher Logic
+        const INITIAL_TEMPLATE = `<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">My Creative Portfolio</title>
     <meta name="description" content="Portfolio of a creative developer.">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">${CLOSE_SCRIPT}
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&amp;family=Space+Grotesk:wght@300;500;700&amp;display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Tailwind Config with ID for dynamic updates -->
@@ -18,9 +66,9 @@
                     fontFamily: { sans: ['Outfit', 'sans-serif'], mono: ['Space Grotesk', 'monospace'] },
                     colors: {
                         'brand-dark': '#0f172a', 
-                        'brand-purple': '#edb640', 
+                        'brand-purple': '#7c3aed', 
                         'brand-blue': '#2563eb',
-                        'brand-accent': '#9961b8', 
+                        'brand-accent': '#06b6d4', 
                         'glass-white': 'rgba(255, 255, 255, 0.05)',
                     },
                     animation: { 'float': 'float 6s ease-in-out infinite' },
@@ -28,7 +76,7 @@
                 }
             }
         }
-    </script>
+    ${CLOSE_SCRIPT}
     <style>
         .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .gradient-text { background: linear-gradient(135deg, var(--tw-gradient-stops)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -55,7 +103,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex-shrink-0 cursor-pointer" onclick="window.scrollTo(0,0)">
-                    <span id="nav-logo" class="font-mono text-xl font-bold tracking-tighter text-white">MY.PORTFOLIO</span>
+                    <span id="nav-logo" class="font-mono text-xl font-bold tracking-tighter text-white">MY<span class="text-brand-purple">.</span>PORTFOLIO</span>
                 </div>
                 <div class="hidden md:flex items-center">
                     <div class="ml-10 flex items-baseline space-x-8">
@@ -90,7 +138,7 @@
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col-reverse lg:flex-row items-center">
             <div class="w-full lg:w-1/2 text-center lg:text-left mt-12 lg:mt-0 z-10">
                 <div id="hero-badge" class="inline-block px-3 py-1 mb-4 text-xs font-mono text-brand-accent border border-brand-accent/30 rounded-full bg-brand-accent/5">Welcome to my world</div>
-                <h1 id="hero-headline" class="text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight">Creating Digital Experiences.</h1>
+                <h1 id="hero-headline" class="text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight">Creating <br><span class="gradient-text gradient-main from-brand-blue to-brand-purple">Digital</span> <br>Experiences.</h1>
                 <p id="hero-desc" class="text-xl text-slate-400 mb-8 max-w-lg mx-auto lg:mx-0">I build interactive tools, design visual experiences, and explore the future of the web.</p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                     <a href="#portfolio" class="px-8 py-3 bg-white text-brand-dark font-bold rounded-full hover:bg-gray-200 transition-colors">View Projects</a>
@@ -121,7 +169,7 @@
                     <div class="p-6">
                         <h3 class="text-xl font-bold text-white mb-2 group-hover:text-brand-purple transition-colors">Project One</h3>
                         <p class="text-slate-400 text-sm mb-4">An amazing application that does something cool.</p>
-                        <a href="#" class="text-brand-purple font-medium text-sm hover:underline">View Details →</a>
+                        <a href="#" class="text-brand-purple font-medium text-sm hover:underline">View Details &rarr;</a>
                     </div>
                 </div>
             </div>
@@ -157,7 +205,7 @@
 
     <section id="blog" class="py-20 bg-slate-900/30">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-8 border-b border-white/10 pb-4">Blog &amp; Updates</h2>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-8 border-b border-white/10 pb-4">Blog & Updates</h2>
             <div id="blog-posts" class="space-y-8"></div>
         </div>
     </section>
@@ -205,7 +253,292 @@
                 autoDisplay: false
             }, 'google_translate_element');
         }
-    </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    ${CLOSE_SCRIPT}
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit">${CLOSE_SCRIPT}
+</body>
+</html>`;
 
-</body></html>
+        function CMSApp() {
+            const [currentHtml, setCurrentHtml] = useState(INITIAL_TEMPLATE);
+            const [activeTab, setActiveTab] = useState('identity'); 
+            const [viewMode, setViewMode] = useState('preview');
+            const [showCopySuccess, setShowCopySuccess] = useState(false);
+
+            // Form States
+            const [identityForm, setIdentityForm] = useState({
+                siteTitle: 'My Creative Portfolio',
+                logoText: 'MY.PORTFOLIO',
+                heroBadge: 'Welcome to my world',
+                heroHeadline: 'Creating Digital Experiences.',
+                heroDesc: 'I build interactive tools, design visual experiences, and explore the future of the web.',
+                footerText: '© 2025 Your Name. All rights reserved.',
+                primaryColor: '#7c3aed', // Default Purple
+                accentColor: '#06b6d4'   // Default Cyan
+            });
+
+            const [projectForm, setProjectForm] = useState({
+                title: '', description: '', link: '', category: 'Web', icon: 'fas fa-code'
+            });
+
+            const [blogForm, setBlogForm] = useState({
+                title: '', date: new Date().toISOString().split('T')[0], category: 'Update', content: ''
+            });
+
+            const [galleryForm, setGalleryForm] = useState({
+                imageUrl: '', postLink: ''
+            });
+
+            // --- ACTIONS ---
+            const handleUpdateIdentity = () => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(currentHtml, 'text/html');
+
+                const safeSet = (id, html) => { const el = doc.getElementById(id); if(el) el.innerHTML = html; };
+                const titleTag = doc.getElementById('page-title');
+                if(titleTag) titleTag.innerText = identityForm.siteTitle;
+
+                safeSet('nav-logo', identityForm.logoText);
+                safeSet('hero-badge', identityForm.heroBadge);
+                safeSet('hero-headline', identityForm.heroHeadline);
+                safeSet('hero-desc', identityForm.heroDesc);
+                safeSet('footer-copy', identityForm.footerText);
+
+                // COLOR UPDATES via Regex on the script tag
+                const configScript = doc.getElementById('tailwind-config');
+                if(configScript) {
+                    let scriptContent = configScript.innerHTML;
+                    // Regex to replace 'brand-purple': '...' with new color
+                    scriptContent = scriptContent.replace(/'brand-purple':\s*'#[a-fA-F0-9]{6}'/g, `'brand-purple': '${identityForm.primaryColor}'`);
+                    scriptContent = scriptContent.replace(/'brand-accent':\s*'#[a-fA-F0-9]{6}'/g, `'brand-accent': '${identityForm.accentColor}'`);
+                    configScript.innerHTML = scriptContent;
+                }
+
+                setCurrentHtml(doc.documentElement.outerHTML);
+                alert("Site Identity & Colors Updated!");
+            };
+
+            // ... (Other handlers remain similar, re-implemented below for completeness) ...
+            
+            const handleAddProject = () => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(currentHtml, 'text/html');
+                const grid = doc.getElementById('projects-grid');
+                if (grid) {
+                    // We need to use the current colors in class logic or rely on Tailwind utility classes
+                    // Since we updated the Tailwind config, text-brand-purple will automatically use the new color!
+                    const newCard = doc.createElement('div');
+                    newCard.className = `group glass-card rounded-xl overflow-hidden hover:border-brand-purple/50 transition-all duration-300 hover:-translate-y-1`;
+                    newCard.innerHTML = `
+                        <div class="h-48 bg-gradient-to-br from-indigo-900 to-slate-800 flex items-center justify-center relative overflow-hidden">
+                            <i class="${projectForm.icon} text-5xl text-white/20 group-hover:text-white/40 transition-all"></i>
+                            <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-white mb-2 group-hover:text-brand-purple transition-colors">${projectForm.title}</h3>
+                            <p class="text-slate-400 text-sm mb-4">${projectForm.description}</p>
+                            <a href="${projectForm.link}" target="_blank" class="text-brand-purple font-medium text-sm hover:underline">Launch App &rarr;</a>
+                        </div>
+                    `;
+                    grid.insertBefore(newCard, grid.firstChild);
+                    setCurrentHtml(doc.documentElement.outerHTML);
+                    setProjectForm({ ...projectForm, title: '', description: '', link: '' });
+                    alert("Project added!");
+                }
+            };
+
+            const handleAddBlogPost = () => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(currentHtml, 'text/html');
+                const blogContainer = doc.getElementById('blog-posts');
+                if (blogContainer) {
+                    const newPost = doc.createElement('article');
+                    newPost.className = "glass-card p-6 rounded-xl border border-white/5 hover:bg-white/5 transition-colors mb-8";
+                    const dateStr = new Date(blogForm.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    newPost.innerHTML = `
+                        <div class="flex items-center gap-4 mb-3 text-xs text-slate-500">
+                            <span class="text-brand-accent">${blogForm.category}</span>
+                            <span>•</span>
+                            <span>${dateStr}</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">${blogForm.title}</h3>
+                        <div class="text-slate-400 leading-relaxed whitespace-pre-line">${blogForm.content}</div>
+                    `;
+                    blogContainer.insertBefore(newPost, blogContainer.firstChild);
+                    setCurrentHtml(doc.documentElement.outerHTML);
+                    setBlogForm({...blogForm, title: '', content: ''});
+                    alert("Blog post published!");
+                }
+            };
+
+            const handleAddPhoto = () => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(currentHtml, 'text/html');
+                const galleryGrid = doc.getElementById('gallery-grid');
+                if (galleryGrid) {
+                    const newPhoto = doc.createElement('a');
+                    newPhoto.href = galleryForm.postLink || '#';
+                    newPhoto.target = "_blank";
+                    newPhoto.className = "block relative aspect-square rounded-xl overflow-hidden group border border-white/5";
+                    newPhoto.innerHTML = `
+                        <img src="${galleryForm.imageUrl}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Insta Post">
+                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <i class="fab fa-instagram text-3xl text-white"></i>
+                        </div>
+                    `;
+                    galleryGrid.insertBefore(newPhoto, galleryGrid.firstChild);
+                    setCurrentHtml(doc.documentElement.outerHTML);
+                    setGalleryForm({ imageUrl: '', postLink: '' });
+                    alert("Photo added!");
+                }
+            }
+
+            const copyToClipboard = () => {
+                const finalCode = currentHtml;
+                const textArea = document.createElement("textarea");
+                textArea.value = finalCode;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-9999px";
+                textArea.style.top = "0";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        setShowCopySuccess(true);
+                        setTimeout(() => setShowCopySuccess(false), 2000);
+                    }
+                } catch (err) { console.error('Fallback failed', err); }
+                document.body.removeChild(textArea);
+            };
+
+            return (
+                <div className="flex h-screen bg-slate-900 text-white font-sans overflow-hidden">
+                    <div className="w-80 md:w-96 bg-slate-950 border-r border-slate-800 flex flex-col shadow-xl z-20">
+                        <div className="p-6 border-b border-slate-800">
+                            <h1 className="text-xl font-bold flex items-center gap-2">
+                                <i className="fas fa-terminal text-brand-purple"></i>
+                                Static CMS
+                            </h1>
+                            <p className="text-xs text-slate-500 mt-1">Universal Website Manager</p>
+                        </div>
+                        <div className="flex border-b border-slate-800">
+                             <button onClick={() => setActiveTab('identity')} className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${activeTab === 'identity' ? 'bg-slate-900 text-green-400 border-b-2 border-green-400' : 'text-slate-500 hover:text-slate-300'}`}>
+                                <i className="fas fa-sliders-h"></i> Config
+                            </button>
+                            <button onClick={() => setActiveTab('content')} className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${activeTab === 'content' ? 'bg-slate-900 text-purple-400 border-b-2 border-purple-400' : 'text-slate-500 hover:text-slate-300'}`}>
+                                <i className="fas fa-pen-nib"></i> Content
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {activeTab === 'identity' && (
+                                <div className="space-y-4">
+                                    <h2 className="text-lg font-semibold text-slate-300">Theme & Settings</h2>
+                                    
+                                    <div className="grid grid-cols-2 gap-4 bg-slate-900 p-3 rounded-lg border border-slate-800">
+                                        <div className="space-y-1">
+                                            <label className="text-xs text-slate-500 uppercase">Primary Color</label>
+                                            <div className="flex items-center gap-2">
+                                                <input type="color" className="h-8 w-8 rounded cursor-pointer bg-transparent border-none" 
+                                                    value={identityForm.primaryColor} onChange={(e) => setIdentityForm({...identityForm, primaryColor: e.target.value})} />
+                                                <span className="text-xs font-mono">{identityForm.primaryColor}</span>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-xs text-slate-500 uppercase">Accent Color</label>
+                                            <div className="flex items-center gap-2">
+                                                <input type="color" className="h-8 w-8 rounded cursor-pointer bg-transparent border-none" 
+                                                    value={identityForm.accentColor} onChange={(e) => setIdentityForm({...identityForm, accentColor: e.target.value})} />
+                                                <span className="text-xs font-mono">{identityForm.accentColor}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Website Title</label>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-green-500 focus:outline-none"
+                                            value={identityForm.siteTitle} onChange={(e) => setIdentityForm({...identityForm, siteTitle: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Logo Text</label>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-green-500 focus:outline-none"
+                                            value={identityForm.logoText} onChange={(e) => setIdentityForm({...identityForm, logoText: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 uppercase">Hero Headline</label>
+                                        <textarea className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:border-green-500 focus:outline-none h-20"
+                                            value={identityForm.heroHeadline} onChange={(e) => setIdentityForm({...identityForm, heroHeadline: e.target.value})}></textarea>
+                                    </div>
+                                    <button onClick={handleUpdateIdentity} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2">
+                                        <i className="fas fa-save"></i> Apply Theme & Text
+                                    </button>
+                                </div>
+                            )}
+
+                            {activeTab === 'content' && (
+                                <div className="space-y-8">
+                                    {/* Blog Sub-section */}
+                                    <div className="space-y-4 border-b border-slate-800 pb-8">
+                                        <h2 className="text-lg font-semibold text-purple-400"><i className="fas fa-pen-nib"></i> Write Post</h2>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm" placeholder="Title"
+                                            value={blogForm.title} onChange={(e) => setBlogForm({...blogForm, title: e.target.value})} />
+                                        <textarea className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm h-24" placeholder="Content..."
+                                            value={blogForm.content} onChange={(e) => setBlogForm({...blogForm, content: e.target.value})}></textarea>
+                                        <button onClick={handleAddBlogPost} disabled={!blogForm.title} className="w-full bg-purple-600/50 hover:bg-purple-600 text-white font-bold py-2 rounded text-sm">Publish</button>
+                                    </div>
+
+                                    {/* Project Sub-section */}
+                                    <div className="space-y-4 border-b border-slate-800 pb-8">
+                                        <h2 className="text-lg font-semibold text-blue-400"><i className="fas fa-rocket"></i> Add Project</h2>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm" placeholder="Title"
+                                            value={projectForm.title} onChange={(e) => setProjectForm({...projectForm, title: e.target.value})} />
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm" placeholder="Link URL"
+                                            value={projectForm.link} onChange={(e) => setProjectForm({...projectForm, link: e.target.value})} />
+                                        <button onClick={handleAddProject} disabled={!projectForm.title} className="w-full bg-blue-600/50 hover:bg-blue-600 text-white font-bold py-2 rounded text-sm">Add Project</button>
+                                    </div>
+
+                                    {/* Gallery Sub-section */}
+                                    <div className="space-y-4">
+                                        <h2 className="text-lg font-semibold text-pink-400"><i className="fas fa-image"></i> Add Photo</h2>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm font-mono" placeholder="Image URL"
+                                            value={galleryForm.imageUrl} onChange={(e) => setGalleryForm({...galleryForm, imageUrl: e.target.value})} />
+                                        <button onClick={handleAddPhoto} disabled={!galleryForm.imageUrl} className="w-full bg-pink-600/50 hover:bg-pink-600 text-white font-bold py-2 rounded text-sm">Add to Gallery</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex-1 flex flex-col h-full relative">
+                        <div className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6">
+                            <div className="flex items-center gap-4 bg-slate-800 p-1 rounded-lg">
+                                <button onClick={() => setViewMode('preview')} className={`px-4 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all ${viewMode === 'preview' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
+                                    <i className="fas fa-eye"></i> Preview
+                                </button>
+                                <button onClick={() => setViewMode('code')} className={`px-4 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all ${viewMode === 'code' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
+                                    <i className="fas fa-code"></i> Code
+                                </button>
+                            </div>
+                            <button onClick={copyToClipboard} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${showCopySuccess ? 'bg-green-500 text-white' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}>
+                                {showCopySuccess ? <i className="fas fa-check"></i> : <i className="fas fa-copy"></i>}
+                                {showCopySuccess ? 'Copied!' : 'Copy Code'}
+                            </button>
+                        </div>
+                        <div className="flex-1 bg-black relative overflow-hidden">
+                            {viewMode === 'preview' ? (
+                                <iframe title="Site Preview" srcDoc={currentHtml} className="w-full h-full border-0" sandbox="allow-scripts"></iframe>
+                            ) : (
+                                <textarea className="w-full h-full bg-[#1e1e1e] text-slate-300 font-mono text-sm p-6 resize-none focus:outline-none" value={currentHtml} readOnly></textarea>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<CMSApp />);
+    </script>
+</body>
+</html>

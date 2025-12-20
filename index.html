@@ -45,12 +45,11 @@
 
     <!-- 5. The React App Logic -->
     <script type="text/babel">
-        // Added useRef here
         const { useState, useEffect, useRef } = React;
 
         const CLOSE_SCRIPT = '<' + '/script>';
 
-        // --- THE WEBSITE TEMPLATE ---
+        // --- THE WEBSITE TEMPLATE (Based on your provided code) ---
         const INITIAL_TEMPLATE = `<!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -261,21 +260,51 @@
 
     <script>
         function changeLang(lang) {
+            const dropdown = document.getElementById('lang-dropdown');
+            if(dropdown) dropdown.classList.remove('show');
+
             const combo = document.querySelector('.goog-te-combo');
             if (combo) {
                 combo.value = lang;
                 combo.dispatchEvent(new Event('change'));
                 const btnText = document.getElementById('lang-text');
                 if(btnText) btnText.innerText = lang.toUpperCase();
+            } else {
+                // Retry mechanism
+                setTimeout(function() {
+                    const retryCombo = document.querySelector('.goog-te-combo');
+                    if (retryCombo) {
+                        retryCombo.value = lang;
+                        retryCombo.dispatchEvent(new Event('change'));
+                        const btnText = document.getElementById('lang-text');
+                        if(btnText) btnText.innerText = lang.toUpperCase();
+                    } else {
+                        // Only show alert if retry fails
+                        alert('Translation service is loading. Please check your internet connection or disable ad-blockers if it persists.');
+                    }
+                }, 1000);
             }
-            document.getElementById('lang-dropdown').classList.remove('show');
+        }
+
+        // Close dropdown when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.lang-btn') && !event.target.closest('button[onclick*="lang-dropdown"]')) {
+                var dropdowns = document.getElementsByClassName("lang-menu");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
         }
 
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             addEventListener('click', function (e) { e.preventDefault(); document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' }); });
         });
         
-        function googleTranslateElementInit() {
+        // Initialize Google Translate
+        window.googleTranslateElementInit = function() {
             new google.translate.TranslateElement({
                 pageLanguage: 'en',
                 includedLanguages: 'en,es,de,fr,it,ja,zh-CN',
@@ -293,8 +322,6 @@
             const [activeTab, setActiveTab] = useState('global'); 
             const [viewMode, setViewMode] = useState('preview');
             const [showCopySuccess, setShowCopySuccess] = useState(false);
-            
-            // Added iframeRef to control scrolling
             const iframeRef = useRef(null);
 
             // --- DATA STATES ---
@@ -304,14 +331,13 @@
             });
 
             const [homeSection, setHomeSection] = useState({
-                badge: 'Welcome to my world', headline: 'Creating Digital Experiences.', desc: 'I build interactive tools and design visual experiences.'
+                badge: 'Welcome to my world', headline: 'Creating Digital Experiences.', desc: 'I build interactive tools, design visual experiences, and explore the future of the web.'
             });
 
             const [aboutSection, setAboutSection] = useState({
-                title: 'About Me', bio: 'I am a passionate creator working at the intersection of technology and art.', thought: 'Creativity is intelligence having fun.'
+                title: 'About Me', bio: 'I am a passionate creator working at the intersection of technology and art. My goal is to build digital experiences that inspire and connect people.', thought: 'Creativity is intelligence having fun.'
             });
 
-            // Input fields for Adding New Items
             const [newItem, setNewItem] = useState({
                 project: { title: '', desc: '', link: '', icon: 'fas fa-code' },
                 blog: { title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'Update' },
@@ -321,45 +347,39 @@
             // --- SCROLL EFFECT ---
             useEffect(() => {
                 if (viewMode === 'preview' && iframeRef.current) {
-                    // Small timeout to allow iframe content to settle
                     setTimeout(() => {
                         try {
                             const iframe = iframeRef.current;
-                            // Check if contentDocument exists (it might be null if cross-origin, but srcDoc usually allows it)
                             const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                            
                             if (activeTab === 'global') {
-                                // Scroll to top
                                 iframe.contentWindow.scrollTo({ top: 0, behavior: 'smooth' });
                             } else {
-                                // Scroll to specific section ID (home, about, portfolio, etc.)
                                 const targetId = activeTab; 
                                 const element = iframeDoc.getElementById(targetId);
-                                if (element) {
-                                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }
+                                if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }
-                        } catch (e) {
-                            console.log("Scrolling preview failed:", e);
-                        }
+                        } catch (e) { console.log("Scrolling preview failed:", e); }
                     }, 100);
                 }
             }, [activeTab, viewMode]);
 
-            // --- UPDATE FUNCTIONS ---
+            // --- UPDATE HELPER ---
+            const updateHtmlState = (doc) => {
+                // Ensure DOCTYPE is preserved
+                const htmlContent = doc.documentElement.outerHTML;
+                setCurrentHtml(`<!DOCTYPE html>\n${htmlContent}`);
+            };
 
             const updateGlobal = () => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(currentHtml, 'text/html');
                 const safeSet = (id, html) => { const el = doc.getElementById(id); if(el) el.innerHTML = html; };
 
-                // Texts
                 const titleTag = doc.getElementById('page-title');
                 if(titleTag) titleTag.innerText = globalConfig.siteTitle;
                 safeSet('nav-logo', globalConfig.logoText);
                 safeSet('footer-copy', globalConfig.footerText);
 
-                // Colors
                 const configScript = doc.getElementById('tailwind-config');
                 if(configScript) {
                     let scriptContent = configScript.innerHTML;
@@ -367,8 +387,7 @@
                     scriptContent = scriptContent.replace(/'brand-accent':\s*'#[a-fA-F0-9]{6}'/g, `'brand-accent': '${globalConfig.accentColor}'`);
                     configScript.innerHTML = scriptContent;
                 }
-
-                setCurrentHtml(doc.documentElement.outerHTML);
+                updateHtmlState(doc);
                 alert("Global Settings Updated!");
             };
 
@@ -381,7 +400,7 @@
                 safeSet('hero-headline', homeSection.headline);
                 safeSet('hero-desc', homeSection.desc);
                 
-                setCurrentHtml(doc.documentElement.outerHTML);
+                updateHtmlState(doc);
                 alert("Home Section Updated!");
             };
 
@@ -392,21 +411,14 @@
 
                 safeSet('about-title', aboutSection.title);
                 safeSet('about-text', aboutSection.bio);
-                
-                // Update Thought Card
                 const thoughtContainer = doc.getElementById('latest-thought');
                 if (thoughtContainer) {
-                    thoughtContainer.innerHTML = `
-                        <div class="flex items-center gap-3 mb-2"><span class="text-xs text-slate-400">Thought of the day</span></div>
-                        <p class="italic text-slate-300">"${aboutSection.thought}"</p>
-                    `;
+                    thoughtContainer.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="text-xs text-slate-400">Thought of the day</span></div><p class="italic text-slate-300">"${aboutSection.thought}"</p>`;
                 }
-
-                setCurrentHtml(doc.documentElement.outerHTML);
+                updateHtmlState(doc);
                 alert("About Section Updated!");
             };
 
-            // ADD ITEM FUNCTIONS (Append to Lists)
             const addToSection = (type) => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(currentHtml, 'text/html');
@@ -416,7 +428,7 @@
                     if(grid) {
                         const div = doc.createElement('div');
                         div.className = `group glass-card rounded-xl overflow-hidden hover:border-brand-purple/50 transition-all duration-300 hover:-translate-y-1`;
-                        div.innerHTML = `<div class="h-48 bg-gradient-to-br from-indigo-900 to-slate-800 flex items-center justify-center relative overflow-hidden"><i class="${newItem.project.icon} text-5xl text-white/20 group-hover:text-white/40 transition-all"></i></div><div class="p-6"><h3 class="text-xl font-bold text-white mb-2 group-hover:text-brand-purple transition-colors">${newItem.project.title}</h3><p class="text-slate-400 text-sm mb-4">${newItem.project.desc}</p><a href="${newItem.project.link}" target="_blank" class="text-brand-purple font-medium text-sm hover:underline">Launch App &rarr;</a></div>`;
+                        div.innerHTML = `<div class="h-48 bg-gradient-to-br from-indigo-900 to-slate-800 flex items-center justify-center relative overflow-hidden"><i class="${newItem.project.icon} text-5xl text-white/20 group-hover:text-white/40 transition-all"></i></div><div class="p-6"><h3 class="text-xl font-bold text-white mb-2 group-hover:text-brand-purple transition-colors">${newItem.project.title}</h3><p class="text-slate-400 text-sm mb-4">${newItem.project.desc}</p><a href="${newItem.project.link}" target="_blank" class="text-brand-purple font-medium text-sm hover:underline">View Details &rarr;</a></div>`;
                         grid.insertBefore(div, grid.firstChild);
                         setNewItem({...newItem, project: { title: '', desc: '', link: '', icon: 'fas fa-code' }});
                     }
@@ -442,14 +454,19 @@
                         setNewItem({...newItem, photo: { url: '', link: '' }});
                     }
                 }
-
-                setCurrentHtml(doc.documentElement.outerHTML);
+                updateHtmlState(doc);
                 alert("Item Added!");
             };
 
             const copyToClipboard = () => {
+                // Ensure the string has DOCTYPE if missing
+                let finalCode = currentHtml;
+                if (!finalCode.trim().toLowerCase().startsWith('<!doctype html>')) {
+                    finalCode = `<!DOCTYPE html>\n${finalCode}`;
+                }
+                
                 const textArea = document.createElement("textarea");
-                textArea.value = currentHtml;
+                textArea.value = finalCode;
                 textArea.style.position = "fixed";
                 textArea.style.left = "-9999px";
                 document.body.appendChild(textArea);
@@ -473,8 +490,6 @@
 
             return (
                 <div className="flex h-screen bg-slate-900 text-white font-sans overflow-hidden">
-                    
-                    {/* NEW: Organized Sidebar */}
                     <div className="w-80 md:w-96 bg-slate-950 border-r border-slate-800 flex flex-col shadow-xl z-20">
                         <div className="p-6 border-b border-slate-800">
                             <h1 className="text-xl font-bold flex items-center gap-2">
@@ -483,8 +498,6 @@
                             </h1>
                             <p className="text-xs text-slate-500 mt-1">Manage Content & Design</p>
                         </div>
-
-                        {/* Section Menu */}
                         <div className="flex-1 overflow-y-auto flex">
                             <div className="w-20 bg-slate-900 flex flex-col items-center py-4 gap-4 border-r border-slate-800">
                                 {sections.map(sec => (
@@ -498,85 +511,35 @@
                                     </button>
                                 ))}
                             </div>
-
                             <div className="flex-1 p-6 overflow-y-auto">
-                                
-                                {/* GLOBAL FORM */}
                                 {activeTab === 'global' && (
                                     <div className="space-y-4">
                                         <h3 className="font-bold text-lg text-white mb-4">Global Settings</h3>
-                                        
-                                        <div className="space-y-1">
-                                            <label className="text-xs text-slate-500 uppercase">Colors</label>
-                                            <div className="flex gap-4">
-                                                <div>
-                                                    <input type="color" className="block w-8 h-8 rounded cursor-pointer border-0 p-0" value={globalConfig.primaryColor} onChange={(e) => setGlobalConfig({...globalConfig, primaryColor: e.target.value})} />
-                                                    <span className="text-[10px] text-slate-500">Primary</span>
-                                                </div>
-                                                <div>
-                                                    <input type="color" className="block w-8 h-8 rounded cursor-pointer border-0 p-0" value={globalConfig.accentColor} onChange={(e) => setGlobalConfig({...globalConfig, accentColor: e.target.value})} />
-                                                    <span className="text-[10px] text-slate-500">Accent</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <label className="text-xs text-slate-500 uppercase">Site Title</label>
-                                            <input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={globalConfig.siteTitle} onChange={(e) => setGlobalConfig({...globalConfig, siteTitle: e.target.value})} />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-xs text-slate-500 uppercase">Logo Text</label>
-                                            <input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={globalConfig.logoText} onChange={(e) => setGlobalConfig({...globalConfig, logoText: e.target.value})} />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-xs text-slate-500 uppercase">Footer Text</label>
-                                            <input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={globalConfig.footerText} onChange={(e) => setGlobalConfig({...globalConfig, footerText: e.target.value})} />
-                                        </div>
+                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Colors</label><div className="flex gap-4"><div><input type="color" className="block w-8 h-8 rounded cursor-pointer border-0 p-0" value={globalConfig.primaryColor} onChange={(e) => setGlobalConfig({...globalConfig, primaryColor: e.target.value})} /><span className="text-[10px] text-slate-500">Primary</span></div><div><input type="color" className="block w-8 h-8 rounded cursor-pointer border-0 p-0" value={globalConfig.accentColor} onChange={(e) => setGlobalConfig({...globalConfig, accentColor: e.target.value})} /><span className="text-[10px] text-slate-500">Accent</span></div></div></div>
+                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Site Title</label><input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={globalConfig.siteTitle} onChange={(e) => setGlobalConfig({...globalConfig, siteTitle: e.target.value})} /></div>
+                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Logo Text</label><input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={globalConfig.logoText} onChange={(e) => setGlobalConfig({...globalConfig, logoText: e.target.value})} /></div>
+                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Footer Text</label><input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={globalConfig.footerText} onChange={(e) => setGlobalConfig({...globalConfig, footerText: e.target.value})} /></div>
                                         <button onClick={updateGlobal} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded text-sm mt-4">Save Global Settings</button>
                                     </div>
                                 )}
-
-                                {/* HOME FORM */}
                                 {activeTab === 'home' && (
                                     <div className="space-y-4">
                                         <h3 className="font-bold text-lg text-white mb-4">Home Section</h3>
-                                        <div className="space-y-1">
-                                            <label className="text-xs text-slate-500 uppercase">Badge Text</label>
-                                            <input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={homeSection.badge} onChange={(e) => setHomeSection({...homeSection, badge: e.target.value})} />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-xs text-slate-500 uppercase">Headline (HTML Allowed)</label>
-                                            <textarea className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-24" value={homeSection.headline} onChange={(e) => setHomeSection({...homeSection, headline: e.target.value})}></textarea>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-xs text-slate-500 uppercase">Description</label>
-                                            <textarea className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-24" value={homeSection.desc} onChange={(e) => setHomeSection({...homeSection, desc: e.target.value})}></textarea>
-                                        </div>
+                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Badge Text</label><input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={homeSection.badge} onChange={(e) => setHomeSection({...homeSection, badge: e.target.value})} /></div>
+                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Headline</label><textarea className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-24" value={homeSection.headline} onChange={(e) => setHomeSection({...homeSection, headline: e.target.value})}></textarea></div>
+                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Description</label><textarea className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-24" value={homeSection.desc} onChange={(e) => setHomeSection({...homeSection, desc: e.target.value})}></textarea></div>
                                         <button onClick={updateHome} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded text-sm mt-4">Update Home</button>
                                     </div>
                                 )}
-
-                                {/* ABOUT FORM */}
                                 {activeTab === 'about' && (
                                     <div className="space-y-4">
                                         <h3 className="font-bold text-lg text-white mb-4">About Section</h3>
-                                        <div className="space-y-1">
-                                            <label className="text-xs text-slate-500 uppercase">Section Title</label>
-                                            <input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={aboutSection.title} onChange={(e) => setAboutSection({...aboutSection, title: e.target.value})} />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-xs text-slate-500 uppercase">Bio / Text</label>
-                                            <textarea className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-32" value={aboutSection.bio} onChange={(e) => setAboutSection({...aboutSection, bio: e.target.value})}></textarea>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-xs text-slate-500 uppercase">Status / Thought</label>
-                                            <textarea className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-20" value={aboutSection.thought} onChange={(e) => setAboutSection({...aboutSection, thought: e.target.value})}></textarea>
-                                        </div>
+                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Section Title</label><input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={aboutSection.title} onChange={(e) => setAboutSection({...aboutSection, title: e.target.value})} /></div>
+                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Bio / Text</label><textarea className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-32" value={aboutSection.bio} onChange={(e) => setAboutSection({...aboutSection, bio: e.target.value})}></textarea></div>
+                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Status / Thought</label><textarea className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-20" value={aboutSection.thought} onChange={(e) => setAboutSection({...aboutSection, thought: e.target.value})}></textarea></div>
                                         <button onClick={updateAbout} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded text-sm mt-4">Update About</button>
                                     </div>
                                 )}
-
-                                {/* PORTFOLIO FORM */}
                                 {activeTab === 'portfolio' && (
                                     <div className="space-y-4">
                                         <h3 className="font-bold text-lg text-white mb-4">Add Project</h3>
@@ -586,19 +549,15 @@
                                         <button onClick={() => addToSection('project')} disabled={!newItem.project.title} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded text-sm mt-2 disabled:opacity-50">Add Project</button>
                                     </div>
                                 )}
-
-                                {/* BLOG FORM */}
                                 {activeTab === 'blog' && (
                                     <div className="space-y-4">
                                         <h3 className="font-bold text-lg text-white mb-4">Add Blog Post</h3>
                                         <input type="text" placeholder="Title" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={newItem.blog.title} onChange={(e) => setNewItem({...newItem, blog: {...newItem.blog, title: e.target.value}})} />
                                         <input type="date" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm text-slate-400" value={newItem.blog.date} onChange={(e) => setNewItem({...newItem, blog: {...newItem.blog, date: e.target.value}})} />
-                                        <textarea placeholder="Content (HTML allowed)" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-40" value={newItem.blog.content} onChange={(e) => setNewItem({...newItem, blog: {...newItem.blog, content: e.target.value}})}></textarea>
+                                        <textarea placeholder="Content" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-40" value={newItem.blog.content} onChange={(e) => setNewItem({...newItem, blog: {...newItem.blog, content: e.target.value}})}></textarea>
                                         <button onClick={() => addToSection('blog')} disabled={!newItem.blog.title} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded text-sm mt-2 disabled:opacity-50">Publish Post</button>
                                     </div>
                                 )}
-
-                                {/* GALLERY FORM */}
                                 {activeTab === 'gallery' && (
                                     <div className="space-y-4">
                                         <h3 className="font-bold text-lg text-white mb-4">Add Photo</h3>
@@ -607,12 +566,9 @@
                                         <button onClick={() => addToSection('photo')} disabled={!newItem.photo.url} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded text-sm mt-2 disabled:opacity-50">Add to Gallery</button>
                                     </div>
                                 )}
-
                             </div>
                         </div>
                     </div>
-
-                    {/* Preview */}
                     <div className="flex-1 flex flex-col h-full relative">
                         <div className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6">
                             <div className="flex items-center gap-4 bg-slate-800 p-1 rounded-lg">

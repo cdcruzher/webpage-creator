@@ -4,36 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Site Manager | CD.CRUZHER</title>
-    
-    <!-- 1. Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- 2. Load FontAwesome (Icons) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- 3. Load React & ReactDOM from CDN -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- 4. Load Babel (to translate JSX to JS in browser) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- Tailwind Config -->
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'brand-dark': '#0f172a',
-                        'brand-purple': '#7c3aed',
-                        'brand-blue': '#2563eb',
-                    }
-                }
-            }
+            theme: { extend: { colors: { 'brand-dark': '#0f172a', 'brand-purple': '#7c3aed', 'brand-blue': '#2563eb' } } }
         }
     </script>
     <style>
-        /* Custom Scrollbar for Admin Panel */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
@@ -43,552 +24,755 @@
 <body class="bg-slate-900 text-white overflow-hidden">
     <div id="root"></div>
 
-    <!-- 5. The React App Logic -->
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
         const CLOSE_SCRIPT = '<' + '/script>';
 
-        // --- THE WEBSITE TEMPLATE (Based on your provided code) ---
-        const INITIAL_TEMPLATE = `<!DOCTYPE html>
+        // --- GENERATOR HELPER ---
+        const generateSiteCode = (globalData, content, isPreview = false) => {
+            const finalData = { ...content, config: { ...content.config, ...globalData } };
+            const safeData = JSON.stringify(finalData, null, 2);
+            
+            return `<!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">My Creative Portfolio</title>
-    <meta name="description" content="Portfolio of a creative developer.">
-    <script src="https://cdn.tailwindcss.com">${CLOSE_SCRIPT}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <title>${finalData.config.siteTitle}</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\/script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
+    <script src="https://unpkg.com/lucide@latest"><\/script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Tailwind Config -->
-    <script id="tailwind-config">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        section { scroll-margin-top: 100px; }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            background: rgba(30, 41, 59, 0.9);
+            border-color: ${globalData.primaryColor}80;
+            box-shadow: 0 10px 30px -10px ${globalData.primaryColor}50;
+        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+    <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Outfit', 'sans-serif'], mono: ['Space Grotesk', 'monospace'] },
-                    colors: {
-                        'brand-dark': '#0f172a', 
-                        'brand-purple': '#7c3aed', 
-                        'brand-blue': '#2563eb',
-                        'brand-accent': '#06b6d4', 
-                        'glass-white': 'rgba(255, 255, 255, 0.05)',
-                    },
-                    animation: { 'float': 'float 6s ease-in-out infinite' },
-                    keyframes: { float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-20px)' } } }
-                }
-            }
+            theme: { extend: { colors: { primary: '${globalData.primaryColor}', accent: '${globalData.accentColor}' } } }
         }
-    ${CLOSE_SCRIPT}
-    <style>
-        .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .gradient-text { background: linear-gradient(135deg, var(--tw-gradient-stops)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .gradient-main { --tw-gradient-from: #60a5fa; --tw-gradient-to: #c084fc; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
-        .hero-bg { background-image: radial-gradient(circle at 20% 30%, rgba(124, 58, 237, 0.15) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(6, 182, 212, 0.15) 0%, transparent 40%); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        .goog-te-banner-frame { display: none !important; }
-        body { top: 0 !important; }
-        #google_translate_element { visibility: hidden; position: absolute; top: -9999px; }
-        
-        /* Language Menu */
-        .lang-menu { display: none; position: absolute; right: 0; top: 100%; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 0.5rem; padding: 0.5rem; min-width: 120px; z-index: 50; margin-top: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
-        .lang-menu.show { display: block; }
-        .lang-btn { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.5rem 1rem; color: #94a3b8; font-size: 0.875rem; transition: all 0.2s; border-radius: 0.25rem; }
-        .lang-btn:hover { background: rgba(255,255,255,0.1); color: white; }
-    </style>
+    <\/script>
 </head>
-<body class="bg-brand-dark text-slate-300 font-sans selection:bg-brand-purple selection:text-white overflow-x-hidden">
-    <nav class="fixed w-full z-50 transition-all duration-300 glass-card border-b border-white/5" id="navbar">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Logo -->
-                <div class="flex-shrink-0 cursor-pointer" onclick="window.scrollTo(0,0)">
-                    <span id="nav-logo" class="font-mono text-xl font-bold tracking-tighter text-white">MY<span class="text-brand-purple">.</span>PORTFOLIO</span>
-                </div>
-                
-                <!-- Desktop Menu -->
-                <div class="hidden md:flex items-center">
-                    <div class="ml-10 flex items-baseline space-x-8">
-                        <a href="#home" class="hover:text-white transition-colors px-3 py-2 rounded-md text-sm font-medium">Home</a>
-                        <a href="#portfolio" class="hover:text-white transition-colors px-3 py-2 rounded-md text-sm font-medium">Apps</a>
-                        <a href="#about" class="hover:text-white transition-colors px-3 py-2 rounded-md text-sm font-medium">About</a>
-                        <a href="#blog" class="hover:text-white transition-colors px-3 py-2 rounded-md text-sm font-medium">Blog</a>
-                        <a href="#gallery" class="hover:text-white transition-colors px-3 py-2 rounded-md text-sm font-medium">Gallery</a>
+<body class="bg-slate-950 text-slate-100 min-h-screen relative overflow-x-hidden selection:bg-purple-500 selection:text-white">
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-900/30 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-900/30 rounded-full blur-[120px]"></div>
+    </div>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const DATA = ${safeData};
+        const IS_PREVIEW = ${isPreview};
+        const Icon = ({ name, size = 20, className }) => <i data-lucide={name} width={size} height={size} className={className}></i>;
+
+        const NavBar = ({ setView, view }) => {
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+            const t = DATA.nav;
+            const logoSrc = DATA.config.logoImage || "https://ui-avatars.com/api/?name=CD&background=6366f1&color=fff&size=128";
+            const logoVideo = DATA.config.logoVideo;
+            
+            return (
+                <nav className="fixed w-full z-50 glass-card border-b-0 border-white/5 top-0">
+                    <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+                        <div className="flex items-center gap-4 cursor-pointer" onClick={() => setView('home')}>
+                            <div className="h-14 w-14 rounded-xl overflow-hidden border border-slate-600 relative bg-black">
+                                {logoVideo ? (
+                                    <video 
+                                        src={logoVideo} 
+                                        className="h-full w-full object-cover" 
+                                        autoPlay 
+                                        loop={true}
+                                        muted 
+                                        playsInline 
+                                        onEnded={(e) => e.target.play()}
+                                    />
+                                ) : (
+                                    <img src={logoSrc} alt="Logo" className="h-full w-full object-cover" />
+                                )}
+                            </div>
+                            <span className="font-bold text-xl tracking-tight text-white">{DATA.config.logoText}</span>
+                        </div>
+                        <div className="hidden md:flex items-center gap-2">
+                            {['home', 'portfolio', 'about', 'blog', 'gallery'].map(item => (
+                                <button key={item} onClick={() => setView(item)} className={\`px-4 py-2 rounded-full text-sm font-medium transition-all \${view === item ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-400 hover:text-white hover:bg-white/5'}\`}>
+                                    {t[item] || item}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="md:hidden text-slate-300"><Icon name="menu" /></div>
                     </div>
-                    <!-- Language Switcher -->
-                    <div class="ml-6 relative">
-                        <button onclick="document.getElementById('lang-dropdown').classList.toggle('show')" class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/5 border border-white/5">
-                            <i class="fas fa-globe"></i> <span id="lang-text" class="text-sm font-mono font-bold">LANG</span> <i class="fas fa-chevron-down text-xs"></i>
-                        </button>
-                        <div id="lang-dropdown" class="lang-menu">
-                            <button onclick="changeLang('en')" class="lang-btn"><span class="w-4">🇺🇸</span> English</button>
-                            <button onclick="changeLang('es')" class="lang-btn"><span class="w-4">🇲🇽</span> Español</button>
-                            <button onclick="changeLang('de')" class="lang-btn"><span class="w-4">🇩🇪</span> Deutsch</button>
-                            <button onclick="changeLang('fr')" class="lang-btn"><span class="w-4">🇫🇷</span> Français</button>
-                            <button onclick="changeLang('it')" class="lang-btn"><span class="w-4">🇮🇹</span> Italiano</button>
-                            <button onclick="changeLang('ja')" class="lang-btn"><span class="w-4">🇯🇵</span> 日本語</button>
-                            <button onclick="changeLang('zh-CN')" class="lang-btn"><span class="w-4">🇨🇳</span> 中文</button>
+                </nav>
+            );
+        };
+
+        const Hero = ({ data, setView }) => (
+            <section id="home" className="pt-32 pb-20 px-6 text-center animate-fade-in">
+                <div className="max-w-3xl mx-auto">
+                    <div className="inline-block px-4 py-1.5 mb-6 text-xs font-mono text-purple-300 bg-purple-900/30 rounded-full border border-purple-500/30 backdrop-blur-sm">{data.badge}</div>
+                    <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-8 leading-tight tracking-tight">{data.headline}</h1>
+                    <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">{data.desc}</p>
+                    <div className="flex flex-wrap justify-center gap-4">
+                        <button onClick={() => setView('portfolio')} className="px-8 py-4 bg-slate-100 text-slate-900 rounded-full font-bold hover:bg-white transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-white/10">View Work</button>
+                        <button onClick={() => setView('about')} className="px-8 py-4 glass-card text-white rounded-full font-bold hover:bg-slate-800 transition-all transform hover:scale-105 active:scale-95">About Me</button>
+                    </div>
+                </div>
+            </section>
+        );
+
+        const Portfolio = ({ items }) => (
+            <section id="portfolio" className="py-20 px-6">
+                <div className="max-w-6xl mx-auto">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-12 text-white flex items-center gap-3"><span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">Projects</span></h2>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {items.map((project, i) => (
+                            <a key={i} href={project.link} target="_blank" className="glass-card rounded-3xl p-6 group cursor-pointer flex flex-col h-full relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i className={\`\${project.icon} text-6xl text-white\`} /></div>
+                                <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4 text-purple-400 group-hover:text-purple-300 group-hover:scale-110 transition-all duration-300"><i className={\`\${project.icon} text-xl\`} /></div>
+                                <h3 className="text-xl font-bold mb-2 text-slate-100">{project.title}</h3>
+                                <p className="text-slate-400 text-sm mb-6 flex-grow">{project.desc}</p>
+                                <div className="flex items-center text-sm font-medium text-purple-400 group-hover:translate-x-1 transition-transform">View Details <Icon name="arrow-right" size={14} className="ml-1" /></div>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        );
+
+        const About = ({ data }) => (
+            <section id="about" className="py-20 px-6">
+                <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12">
+                    <div className="w-full md:w-1/2">
+                        {data.profileImage ? (
+                            <div className="aspect-square glass-card rounded-full overflow-hidden border-4 border-slate-800 shadow-2xl relative group">
+                                <img src={data.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-blue-500/10 mix-blend-overlay"></div>
+                            </div>
+                        ) : (
+                            <div className="aspect-square glass-card rounded-full flex items-center justify-center text-slate-700 border-4 border-slate-800 shadow-2xl relative">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-blue-500/20 rounded-full animate-pulse"></div>
+                                <Icon name="user" size={80} className="text-slate-500 relative z-10" />
+                            </div>
+                        )}
+                    </div>
+                    <div className="w-full md:w-1/2">
+                        <h2 className="text-4xl font-bold mb-6 text-white">{data.title}</h2>
+                        <div className="text-slate-400 text-lg leading-relaxed mb-8 glass-card p-6 rounded-2xl border-l-4 border-purple-500">{data.bio}</div>
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-purple-500/20 rounded-full text-purple-400"><Icon name="quote" size={20} /></div>
+                            <p className="italic text-slate-300 text-lg pt-2">"{data.thought}"</p>
                         </div>
                     </div>
                 </div>
+            </section>
+        );
 
-                <!-- Mobile Menu Button -->
-                <div class="flex md:hidden">
-                    <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="text-gray-300 hover:text-white p-2">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
+        const Blog = ({ posts }) => (
+            <section id="blog" className="py-20 px-6">
+                <div className="max-w-4xl mx-auto">
+                    <h2 className="text-3xl font-bold mb-12 text-white">Latest Thoughts</h2>
+                    <div className="space-y-6">
+                        {posts.map((post, i) => (
+                            <article key={i} className="glass-card p-8 rounded-3xl hover:border-purple-500/30 transition-colors">
+                                <div className="flex items-center gap-3 text-xs text-slate-400 mb-4 font-mono">
+                                    <span className="text-purple-400 bg-purple-500/10 px-2 py-1 rounded">{post.category}</span><span>•</span><span>{new Date(post.date).toLocaleDateString()}</span>
+                                </div>
+                                <h3 className="text-2xl font-bold mb-4 text-slate-100">{post.title}</h3>
+                                {post.images && post.images.length > 0 && (
+                                    <div className={\`grid gap-4 mb-6 \${post.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}\`}>
+                                        {post.images.map((img, idx) => (
+                                            <img key={idx} src={img} alt="Blog attachment" className="rounded-xl w-full h-48 object-cover border border-slate-700/50" />
+                                        ))}
+                                    </div>
+                                )}
+                                <div className="text-slate-400 leading-relaxed whitespace-pre-line">{post.content}</div>
+                            </article>
+                        ))}
+                    </div>
                 </div>
-            </div>
-        </div>
+            </section>
+        );
 
-        <!-- Mobile Menu (Hidden by default) -->
-        <div id="mobile-menu" class="hidden md:hidden glass-card border-t border-white/10">
-            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="#home" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Home</a>
-                <a href="#portfolio" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Apps</a>
-                <a href="#about" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">About</a>
-                <a href="#blog" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Blog</a>
-                <a href="#gallery" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Gallery</a>
-            </div>
-        </div>
-    </nav>
+        const Gallery = ({ items }) => {
+            const [selectedImg, setSelectedImg] = useState(null);
 
-    <section id="home" class="relative min-h-screen flex items-center justify-center pt-16 hero-bg overflow-hidden">
-        <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-brand-purple/20 rounded-full blur-3xl animate-pulse-slow"></div>
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col-reverse lg:flex-row items-center">
-            <div class="w-full lg:w-1/2 text-center lg:text-left mt-12 lg:mt-0 z-10">
-                <div id="hero-badge" class="inline-block px-3 py-1 mb-4 text-xs font-mono text-brand-accent border border-brand-accent/30 rounded-full bg-brand-accent/5">Welcome to my world</div>
-                <h1 id="hero-headline" class="text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight">Creating <br><span class="gradient-text gradient-main from-brand-blue to-brand-purple">Digital</span> <br>Experiences.</h1>
-                <p id="hero-desc" class="text-xl text-slate-400 mb-8 max-w-lg mx-auto lg:mx-0">I build interactive tools, design visual experiences, and explore the future of the web.</p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                    <a href="#portfolio" class="px-8 py-3 bg-white text-brand-dark font-bold rounded-full hover:bg-gray-200 transition-colors">View Projects</a>
-                </div>
-            </div>
-            <div class="w-full lg:w-1/2 flex justify-center z-10">
-                <div class="relative w-72 h-72 lg:w-96 lg:h-96">
-                    <div class="absolute inset-0 bg-gradient-to-tr from-brand-purple to-brand-accent rounded-full opacity-20 animate-float blur-xl"></div>
-                    <div class="relative w-full h-full rounded-2xl overflow-hidden border border-white/10 glass-card p-2 transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                        <div class="w-full h-full bg-slate-800 rounded-xl overflow-hidden relative flex items-center justify-center">
-                            <span class="text-6xl text-white/10 font-bold">ME</span>
+            return (
+                <section id="gallery" className="py-20 px-6">
+                    <div className="max-w-6xl mx-auto">
+                        <h2 className="text-3xl font-bold mb-12 text-white">Visual Gallery</h2>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {items.map((item, i) => (
+                                <div key={i} onClick={() => setSelectedImg(item.url)} className="relative aspect-square glass-card rounded-2xl overflow-hidden group cursor-pointer">
+                                    <img src={item.url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-80 group-hover:opacity-100" alt="Gallery" />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                        <Icon name="zoom-in" className="text-white" size={32} />
+                                    </div>
+                                    {IS_PREVIEW && (
+                                        <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-slate-300 text-[10px] font-mono py-1.5 text-center truncate px-2 border-t border-white/10">
+                                            {item.url}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </div>
+
+                    {selectedImg && (
+                        <div 
+                            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+                            onClick={() => setSelectedImg(null)}
+                        >
+                            <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2">
+                                <Icon name="x" size={40} />
+                            </button>
+                            <img 
+                                src={selectedImg} 
+                                className="max-w-full max-h-[90vh] rounded-lg shadow-2xl" 
+                                alt="Full size"
+                                onClick={(e) => e.stopPropagation()} 
+                            />
+                        </div>
+                    )}
+                </section>
+            );
+        };
+
+        const Socials = ({ items }) => (
+            <div className="flex justify-center gap-6 mt-8 mb-6">
+                {items && items.map((item, i) => (
+                    <a key={i} href={item.link} target="_blank" className="w-12 h-12 rounded-full glass-card flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all transform hover:scale-110 hover:-translate-y-1">
+                        <i className={\`\${item.icon} text-xl\`}></i>
+                    </a>
+                ))}
             </div>
-        </div>
-    </section>
+        );
 
-    <section id="portfolio" class="py-20 bg-slate-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-12">
-                <div><h2 class="text-3xl md:text-4xl font-bold text-white mb-2">My Projects</h2><p class="text-slate-400">A collection of my recent work.</p></div>
-            </div>
-            <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Generic Project Card -->
-                <div class="group glass-card rounded-xl overflow-hidden hover:border-brand-purple/50 transition-all duration-300 hover:-translate-y-1">
-                    <div class="h-48 bg-gradient-to-br from-indigo-900 to-slate-800 flex items-center justify-center relative overflow-hidden"><i class="fas fa-rocket text-5xl text-white/20 group-hover:text-white/40 transition-all"></i></div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-white mb-2 group-hover:text-brand-purple transition-colors">Project One</h3>
-                        <p class="text-slate-400 text-sm mb-4">An amazing application that does something cool.</p>
-                        <a href="#" class="text-brand-purple font-medium text-sm hover:underline">View Details &rarr;</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+        const App = () => {
+            const [view, setView] = useState('home');
 
-    <section id="about" class="py-20 bg-brand-dark relative overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="grid lg:grid-cols-2 gap-12 items-center">
-                <div class="order-2 lg:order-1">
-                     <div class="aspect-video bg-black flex items-center justify-center relative rounded-xl border border-white/10"><i class="fas fa-user text-4xl text-white/50"></i></div>
-                </div>
-                <div class="order-1 lg:order-2 text-left">
-                    <h2 id="about-title" class="text-4xl md:text-5xl font-bold text-white mt-2 mb-6">About Me</h2>
-                    <!-- ID: about-text -->
-                    <div id="about-text" class="text-slate-400 text-lg mb-6 leading-relaxed">
-                        I am a passionate creator working at the intersection of technology and art. My goal is to build digital experiences that inspire and connect people.
-                    </div>
-                    <div id="latest-thought" class="glass-card p-6 rounded-xl border-l-4 border-brand-purple mt-8">
-                        <div class="flex items-center gap-3 mb-2"><span class="text-xs text-slate-400">Thought of the day</span></div>
-                        <p class="italic text-slate-300">"Creativity is intelligence having fun."</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="gallery" class="py-20 bg-brand-dark">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-             <div class="flex justify-between items-end mb-8">
-                <h2 class="text-3xl md:text-4xl font-bold text-white">Visual Gallery</h2>
-                <a href="#" class="text-slate-400 hover:text-white transition-colors text-sm flex items-center gap-2"><i class="fab fa-instagram"></i> Social Media</a>
-            </div>
-            <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
-        </div>
-    </section>
-
-    <section id="blog" class="py-20 bg-slate-900/30">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-8 border-b border-white/10 pb-4">Blog & Updates</h2>
-            <div id="blog-posts" class="space-y-8"></div>
-        </div>
-    </section>
-
-    <section id="guestbook" class="py-12 bg-[#0a0f1c]">
-        <div class="max-w-3xl mx-auto px-4 text-center">
-            <h3 class="text-2xl font-bold text-white mb-6">Guestbook</h3>
-            <div class="glass-card p-8 rounded-xl min-h-[150px] flex flex-col items-center justify-center">
-                <p class="text-slate-400 mb-4">Comments powered by GitHub</p>
-                <div class="giscus"></div>
-                <p class="text-xs text-slate-600 mt-2 font-mono">Configure Giscus in code to enable</p>
-            </div>
-        </div>
-    </section>
-    
-    <footer id="contact" class="bg-[#050810] pt-20 pb-10 border-t border-white/5">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-slate-500 text-sm">
-            <p id="footer-copy">© 2025 Your Name. All rights reserved.</p>
-        </div>
-    </footer>
-    
-    <!-- Google Translate Hidden Element -->
-    <div id="google_translate_element"></div>
-
-    <script>
-        function changeLang(lang) {
-            const dropdown = document.getElementById('lang-dropdown');
-            if(dropdown) dropdown.classList.remove('show');
-
-            const combo = document.querySelector('.goog-te-combo');
-            if (combo) {
-                combo.value = lang;
-                combo.dispatchEvent(new Event('change'));
-                const btnText = document.getElementById('lang-text');
-                if(btnText) btnText.innerText = lang.toUpperCase();
-            } else {
-                // Retry mechanism
-                setTimeout(function() {
-                    const retryCombo = document.querySelector('.goog-te-combo');
-                    if (retryCombo) {
-                        retryCombo.value = lang;
-                        retryCombo.dispatchEvent(new Event('change'));
-                        const btnText = document.getElementById('lang-text');
-                        if(btnText) btnText.innerText = lang.toUpperCase();
-                    } else {
-                        // Only show alert if retry fails
-                        alert('Translation service is loading. Please check your internet connection or disable ad-blockers if it persists.');
+            useEffect(() => {
+                const handleMessage = (event) => {
+                    if (event.data && event.data.type === 'SCROLL_TO') {
+                        const id = event.data.id;
+                        if (id === 'global') {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } else {
+                            const el = document.getElementById(id);
+                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }
                     }
-                }, 1000);
-            }
-        }
+                };
+                window.addEventListener('message', handleMessage);
+                return () => window.removeEventListener('message', handleMessage);
+            }, []);
 
-        // Close dropdown when clicking outside
-        window.onclick = function(event) {
-            if (!event.target.matches('.lang-btn') && !event.target.closest('button[onclick*="lang-dropdown"]')) {
-                var dropdowns = document.getElementsByClassName("lang-menu");
-                for (var i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
-                }
-            }
-        }
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            });
 
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            addEventListener('click', function (e) { e.preventDefault(); document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' }); });
-        });
-        
-        // Initialize Google Translate
-        window.googleTranslateElementInit = function() {
-            new google.translate.TranslateElement({
-                pageLanguage: 'en',
-                includedLanguages: 'en,es,de,fr,it,ja,zh-CN',
-                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-                autoDisplay: false
-            }, 'google_translate_element');
-        }
-    ${CLOSE_SCRIPT}
-    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit">${CLOSE_SCRIPT}
+            return (
+                <div className="pb-20 pt-20">
+                    <NavBar setView={(v) => {
+                        setView(v);
+                        const el = document.getElementById(v);
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }} view={view} />
+                    
+                    <Hero data={DATA.home} setView={(v) => document.getElementById(v).scrollIntoView({ behavior: 'smooth' })} />
+                    <Portfolio items={DATA.projects} />
+                    <About data={DATA.about} />
+                    <Gallery items={DATA.gallery} />
+                    <Blog posts={DATA.blog} />
+
+                    <footer className="text-center py-12 text-slate-500 text-sm border-t border-slate-800 mt-10">
+                        <Socials items={DATA.social} />
+                        <p>{DATA.config.footerText}</p>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    <\/script>
 </body>
 </html>`;
+        };
+
+        const defaultContent = {
+            config: { logoText: 'MY.PORTFOLIO', footerText: '© 2025 All Rights Reserved.', siteTitle: 'My Portfolio', logoImage: '', logoVideo: '' },
+            nav: { home: 'Home', portfolio: 'Apps', about: 'About', blog: 'Blog', gallery: 'Gallery' },
+            home: { badge: 'Creative Developer', headline: 'Building Digital Experiences', desc: 'Exploring code, music, and science.' },
+            about: { title: 'About Me', bio: 'I am a creative developer passionate about building tools that merge art and technology.', thought: 'Code is the closest thing we have to magic.', profileImage: '' },
+            projects: [
+                { title: 'Music Time Capsule', desc: 'Explore daily musical history.', link: 'https://cdcruzher.github.io/efemerides-music/', icon: 'fas fa-calendar' },
+                { title: 'Gene to Music', desc: 'Convert DNA sequences into melodies.', link: 'https://cdcruzher.github.io/gene-to-music/', icon: 'fas fa-dna' }
+            ],
+            blog: [
+                { title: 'Hello World', content: 'Welcome to my new portfolio.', date: '2025-01-01', category: 'Update', images: [] }
+            ],
+            gallery: [],
+            social: [
+                { platform: 'Twitter', link: '#', icon: 'fab fa-twitter' },
+                { platform: 'GitHub', link: '#', icon: 'fab fa-github' }
+            ]
+        };
 
         function CMSApp() {
-            const [currentHtml, setCurrentHtml] = useState(INITIAL_TEMPLATE);
+            const [globalData, setGlobalData] = useState({ primaryColor: '#8b5cf6', accentColor: '#06b6d4' });
+            const [content, setContent] = useState(defaultContent);
+            const [debouncedHtml, setDebouncedHtml] = useState('');
+            const [revision, setRevision] = useState(0); // Forces iframe refresh
+            
             const [activeTab, setActiveTab] = useState('global'); 
             const [viewMode, setViewMode] = useState('preview');
             const [showCopySuccess, setShowCopySuccess] = useState(false);
+            const fileInputRef = useRef(null);
             const iframeRef = useRef(null);
-
-            // --- DATA STATES ---
-            const [globalConfig, setGlobalConfig] = useState({
-                siteTitle: 'My Portfolio', logoText: 'MY.PORTFOLIO', footerText: '© 2025 Carlos. All rights reserved.',
-                primaryColor: '#7c3aed', accentColor: '#06b6d4'
-            });
-
-            const [homeSection, setHomeSection] = useState({
-                badge: 'Welcome to my world', headline: 'Creating Digital Experiences.', desc: 'I build interactive tools, design visual experiences, and explore the future of the web.'
-            });
-
-            const [aboutSection, setAboutSection] = useState({
-                title: 'About Me', bio: 'I am a passionate creator working at the intersection of technology and art. My goal is to build digital experiences that inspire and connect people.', thought: 'Creativity is intelligence having fun.'
-            });
 
             const [newItem, setNewItem] = useState({
                 project: { title: '', desc: '', link: '', icon: 'fas fa-code' },
-                blog: { title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'Update' },
-                photo: { url: '', link: '' }
+                blog: { title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'Update', images: '' },
+                photo: { url: '', link: '' },
+                social: { platform: '', link: '', icon: 'fab fa-twitter' }
             });
 
-            // --- SCROLL EFFECT ---
+            // Edit Modes
+            const [editingProjectIndex, setEditingProjectIndex] = useState(null);
+            const [editingBlogIndex, setEditingBlogIndex] = useState(null);
+            const [editingPhotoIndex, setEditingPhotoIndex] = useState(null);
+
+            // --- IMPORT FUNCTION ---
+            const handleFileUpload = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const html = e.target.result;
+                    const regex = /const DATA = ({[\s\S]*?});/;
+                    const match = html.match(regex);
+                    
+                    if (match && match[1]) {
+                        try {
+                            const importedData = JSON.parse(match[1]);
+                            if (importedData.config && importedData.config.primaryColor) {
+                                setGlobalData({
+                                    primaryColor: importedData.config.primaryColor,
+                                    accentColor: importedData.config.accentColor || '#06b6d4'
+                                });
+                            }
+                            
+                            // Ensure structure is compatible with updates
+                            if (!importedData.social) importedData.social = [];
+                            if (!importedData.config.logoVideo) importedData.config.logoVideo = '';
+                            
+                            setContent(importedData);
+                            
+                            // Force immediate update to state AND debounced HTML
+                            const code = generateSiteCode({
+                                primaryColor: importedData.config.primaryColor,
+                                accentColor: importedData.config.accentColor || '#06b6d4'
+                            }, importedData, true);
+                            
+                            setDebouncedHtml(code);
+                            setRevision(r => r + 1); 
+                            alert("Site Imported Successfully!");
+                        } catch (err) {
+                            alert("Error parsing the file.");
+                        }
+                    } else {
+                        alert("Could not find configuration data in this file.");
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+            // --- DEBOUNCER FOR PREVIEW ---
+            useEffect(() => {
+                const handler = setTimeout(() => {
+                    setDebouncedHtml(generateSiteCode(globalData, content, true));
+                }, 1000); 
+                return () => clearTimeout(handler);
+            }, [globalData, content]);
+
+            // --- SCROLL SYNC ---
             useEffect(() => {
                 if (viewMode === 'preview' && iframeRef.current) {
-                    setTimeout(() => {
-                        try {
-                            const iframe = iframeRef.current;
-                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                            if (activeTab === 'global') {
-                                iframe.contentWindow.scrollTo({ top: 0, behavior: 'smooth' });
-                            } else {
-                                const targetId = activeTab; 
-                                const element = iframeDoc.getElementById(targetId);
-                                if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }
-                        } catch (e) { console.log("Scrolling preview failed:", e); }
-                    }, 100);
+                    const sendScroll = () => {
+                        iframeRef.current.contentWindow?.postMessage({ type: 'SCROLL_TO', id: activeTab }, '*');
+                    };
+                    sendScroll();
+                    setTimeout(sendScroll, 800);
                 }
-            }, [activeTab, viewMode]);
+            }, [activeTab, viewMode, debouncedHtml]);
 
-            // --- UPDATE HELPER ---
-            const updateHtmlState = (doc) => {
-                // Ensure DOCTYPE is preserved
-                const htmlContent = doc.documentElement.outerHTML;
-                setCurrentHtml(`<!DOCTYPE html>\n${htmlContent}`);
+            // Generate HTML Code immediately
+            const currentHtml = generateSiteCode(globalData, content, false);
+
+            // --- ACTIONS ---
+            const updateContent = (section, field, value) => {
+                setContent(prev => ({...prev, [section]: { ...prev[section], [field]: value } }));
+                setRevision(r => r + 1);
+            };
+            const updateConfig = (field, value) => {
+                setContent(prev => ({...prev, config: { ...prev.config, [field]: value } }));
+                setRevision(r => r + 1);
             };
 
-            const updateGlobal = () => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(currentHtml, 'text/html');
-                const safeSet = (id, html) => { const el = doc.getElementById(id); if(el) el.innerHTML = html; };
-
-                const titleTag = doc.getElementById('page-title');
-                if(titleTag) titleTag.innerText = globalConfig.siteTitle;
-                safeSet('nav-logo', globalConfig.logoText);
-                safeSet('footer-copy', globalConfig.footerText);
-
-                const configScript = doc.getElementById('tailwind-config');
-                if(configScript) {
-                    let scriptContent = configScript.innerHTML;
-                    scriptContent = scriptContent.replace(/'brand-purple':\s*'#[a-fA-F0-9]{6}'/g, `'brand-purple': '${globalConfig.primaryColor}'`);
-                    scriptContent = scriptContent.replace(/'brand-accent':\s*'#[a-fA-F0-9]{6}'/g, `'brand-accent': '${globalConfig.accentColor}'`);
-                    configScript.innerHTML = scriptContent;
+            // Projects
+            const handleProjectSubmit = () => {
+                if(!newItem.project.title) return;
+                let newContent;
+                if (editingProjectIndex !== null) {
+                    newContent = { ...content, projects: [...content.projects] };
+                    newContent.projects[editingProjectIndex] = newItem.project;
+                    setEditingProjectIndex(null);
+                    alert("Project Updated!");
+                } else {
+                    newContent = { ...content, projects: [newItem.project, ...content.projects] };
+                    alert("Project Added!");
                 }
-                updateHtmlState(doc);
-                alert("Global Settings Updated!");
+                setContent(newContent);
+                setNewItem(prev => ({ ...prev, project: { title: '', desc: '', link: '', icon: 'fas fa-code' } }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
             };
+            const editProject = (index) => {
+                setNewItem(prev => ({ ...prev, project: content.projects[index] }));
+                setEditingProjectIndex(index);
+            };
+            const removeProject = (index) => {
+                if(!confirm("Delete this project?")) return;
+                const newProjects = content.projects.filter((_, i) => i !== index);
+                const newContent = { ...content, projects: newProjects };
+                setContent(newContent);
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+            const cancelEditProject = () => {
+                setNewItem(prev => ({ ...prev, project: { title: '', desc: '', link: '', icon: 'fas fa-code' } }));
+                setEditingProjectIndex(null);
+            }
 
-            const updateHome = () => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(currentHtml, 'text/html');
-                const safeSet = (id, html) => { const el = doc.getElementById(id); if(el) el.innerHTML = html; };
+            // Blogs
+            const handleBlogSubmit = () => {
+                if(!newItem.blog.title) return;
                 
-                safeSet('hero-badge', homeSection.badge);
-                safeSet('hero-headline', homeSection.headline);
-                safeSet('hero-desc', homeSection.desc);
-                
-                updateHtmlState(doc);
-                alert("Home Section Updated!");
-            };
+                const imageList = newItem.blog.images ? newItem.blog.images.split('\n').map(l => l.trim()).filter(l => l.length > 0) : [];
+                const blogData = { ...newItem.blog, images: imageList };
 
-            const updateAbout = () => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(currentHtml, 'text/html');
-                const safeSet = (id, html) => { const el = doc.getElementById(id); if(el) el.innerHTML = html; };
-
-                safeSet('about-title', aboutSection.title);
-                safeSet('about-text', aboutSection.bio);
-                const thoughtContainer = doc.getElementById('latest-thought');
-                if (thoughtContainer) {
-                    thoughtContainer.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="text-xs text-slate-400">Thought of the day</span></div><p class="italic text-slate-300">"${aboutSection.thought}"</p>`;
+                let newContent;
+                if (editingBlogIndex !== null) {
+                    newContent = { ...content, blog: [...content.blog] };
+                    newContent.blog[editingBlogIndex] = blogData;
+                    setEditingBlogIndex(null);
+                    alert("Blog Updated!");
+                } else {
+                    newContent = { ...content, blog: [blogData, ...content.blog] };
+                    alert("Blog Published!");
                 }
-                updateHtmlState(doc);
-                alert("About Section Updated!");
+                setContent(newContent);
+                setNewItem(prev => ({ ...prev, blog: { title: '', content: '', date: '', category: 'Update', images: '' } }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
             };
+            const editBlog = (index) => {
+                const post = content.blog[index];
+                const imageString = post.images ? post.images.join('\n') : '';
+                setNewItem(prev => ({ ...prev, blog: { ...post, images: imageString } }));
+                setEditingBlogIndex(index);
+            };
+            const removeBlog = (index) => {
+                if(!confirm("Delete this post?")) return;
+                const newBlog = content.blog.filter((_, i) => i !== index);
+                const newContent = { ...content, blog: newBlog };
+                setContent(newContent);
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+             const cancelEditBlog = () => {
+                setNewItem(prev => ({ ...prev, blog: { title: '', content: '', date: '', category: 'Update', images: '' } }));
+                setEditingBlogIndex(null);
+            }
 
-            const addToSection = (type) => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(currentHtml, 'text/html');
-                
-                if (type === 'project') {
-                    const grid = doc.getElementById('projects-grid');
-                    if(grid) {
-                        const div = doc.createElement('div');
-                        div.className = `group glass-card rounded-xl overflow-hidden hover:border-brand-purple/50 transition-all duration-300 hover:-translate-y-1`;
-                        div.innerHTML = `<div class="h-48 bg-gradient-to-br from-indigo-900 to-slate-800 flex items-center justify-center relative overflow-hidden"><i class="${newItem.project.icon} text-5xl text-white/20 group-hover:text-white/40 transition-all"></i></div><div class="p-6"><h3 class="text-xl font-bold text-white mb-2 group-hover:text-brand-purple transition-colors">${newItem.project.title}</h3><p class="text-slate-400 text-sm mb-4">${newItem.project.desc}</p><a href="${newItem.project.link}" target="_blank" class="text-brand-purple font-medium text-sm hover:underline">View Details &rarr;</a></div>`;
-                        grid.insertBefore(div, grid.firstChild);
-                        setNewItem({...newItem, project: { title: '', desc: '', link: '', icon: 'fas fa-code' }});
-                    }
-                } else if (type === 'blog') {
-                    const container = doc.getElementById('blog-posts');
-                    if(container) {
-                        const article = doc.createElement('article');
-                        article.className = "glass-card p-6 rounded-xl border border-white/5 hover:bg-white/5 transition-colors mb-8";
-                        const dateStr = new Date(newItem.blog.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                        article.innerHTML = `<div class="flex items-center gap-4 mb-3 text-xs text-slate-500"><span class="text-brand-accent">${newItem.blog.category}</span><span>•</span><span>${dateStr}</span></div><h3 class="text-xl font-bold text-white mb-3">${newItem.blog.title}</h3><div class="text-slate-400 leading-relaxed whitespace-pre-line">${newItem.blog.content}</div>`;
-                        container.insertBefore(article, container.firstChild);
-                        setNewItem({...newItem, blog: { title: '', content: '', date: '', category: 'Update' }});
-                    }
-                } else if (type === 'photo') {
-                    const grid = doc.getElementById('gallery-grid');
-                    if(grid) {
-                        const a = doc.createElement('a');
-                        a.href = newItem.photo.link || '#';
-                        a.target = "_blank";
-                        a.className = "block relative aspect-square rounded-xl overflow-hidden group border border-white/5";
-                        a.innerHTML = `<img src="${newItem.photo.url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Post"><div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><i class="fab fa-instagram text-3xl text-white"></i></div>`;
-                        grid.insertBefore(a, grid.firstChild);
-                        setNewItem({...newItem, photo: { url: '', link: '' }});
-                    }
+            // Photos
+            const handlePhotoSubmit = () => {
+                if(!newItem.photo.url) return;
+                let newContent;
+                 if (editingPhotoIndex !== null) {
+                    newContent = { ...content, gallery: [...content.gallery] };
+                    newContent.gallery[editingPhotoIndex] = newItem.photo;
+                    setEditingPhotoIndex(null);
+                    alert("Photo Updated!");
+                } else {
+                    newContent = { ...content, gallery: [newItem.photo, ...content.gallery] };
+                    alert("Photo Added!");
                 }
-                updateHtmlState(doc);
-                alert("Item Added!");
+                setContent(newContent);
+                setNewItem(prev => ({ ...prev, photo: { url: '', link: '' } }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+             const editPhoto = (index) => {
+                setNewItem(prev => ({ ...prev, photo: content.gallery[index] }));
+                setEditingPhotoIndex(index);
+            };
+            const removePhoto = (index) => {
+                if(!confirm("Delete this photo?")) return;
+                const newGallery = content.gallery.filter((_, i) => i !== index);
+                const newContent = { ...content, gallery: newGallery };
+                setContent(newContent);
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+             const cancelEditPhoto = () => {
+                setNewItem(prev => ({ ...prev, photo: { url: '', link: '' } }));
+                setEditingPhotoIndex(null);
+            }
+
+            // Socials
+            const addSocial = () => {
+                if(!newItem.social.platform) return;
+                const currentSocial = content.social || [];
+                const newContent = { ...content, social: [...currentSocial, newItem.social] };
+                setContent(newContent);
+                setNewItem(prev => ({ ...prev, social: { platform: '', link: '', icon: 'fab fa-twitter' } }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
+                alert("Social Link Added!");
+            };
+            const removeSocial = (index) => {
+                if(!confirm("Delete this link?")) return;
+                const newContent = { ...content, social: content.social.filter((_, i) => i !== index) };
+                setContent(newContent);
+                setDebouncedHtml(null); setRevision(r => r + 1);
             };
 
             const copyToClipboard = () => {
-                // Ensure the string has DOCTYPE if missing
-                let finalCode = currentHtml;
-                if (!finalCode.trim().toLowerCase().startsWith('<!doctype html>')) {
-                    finalCode = `<!DOCTYPE html>\n${finalCode}`;
-                }
-                
                 const textArea = document.createElement("textarea");
-                textArea.value = finalCode;
-                textArea.style.position = "fixed";
-                textArea.style.left = "-9999px";
+                textArea.value = currentHtml;
                 document.body.appendChild(textArea);
                 textArea.select();
-                try {
-                    document.execCommand('copy');
-                    setShowCopySuccess(true);
-                    setTimeout(() => setShowCopySuccess(false), 2000);
-                } catch (err) {}
+                try { document.execCommand('copy'); setShowCopySuccess(true); setTimeout(() => setShowCopySuccess(false), 2000); } catch (err) {}
                 document.body.removeChild(textArea);
             };
 
-            const sections = [
-                { id: 'global', label: 'Global', icon: 'fas fa-cog' },
-                { id: 'home', label: 'Home', icon: 'fas fa-home' },
-                { id: 'about', label: 'About', icon: 'fas fa-user' },
-                { id: 'portfolio', label: 'Portfolio', icon: 'fas fa-rocket' },
-                { id: 'blog', label: 'Blog', icon: 'fas fa-pen-nib' },
-                { id: 'gallery', label: 'Gallery', icon: 'fas fa-image' },
-            ];
-
             return (
                 <div className="flex h-screen bg-slate-900 text-white font-sans overflow-hidden">
-                    <div className="w-80 md:w-96 bg-slate-950 border-r border-slate-800 flex flex-col shadow-xl z-20">
-                        <div className="p-6 border-b border-slate-800">
-                            <h1 className="text-xl font-bold flex items-center gap-2">
-                                <i className="fas fa-terminal text-brand-purple"></i>
-                                Site Manager
-                            </h1>
-                            <p className="text-xs text-slate-500 mt-1">Manage Content & Design</p>
+                    <div className="w-80 bg-slate-950 border-r border-slate-800 flex flex-col shadow-xl z-20">
+                        <div className="p-4 border-b border-slate-800">
+                            <h1 className="text-xl font-bold flex items-center gap-2 mb-4"><i className="fas fa-terminal text-brand-purple"></i> Site Manager</h1>
+                            
+                            <button 
+                                onClick={() => fileInputRef.current.click()} 
+                                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded text-xs font-bold border border-slate-700 flex items-center justify-center gap-2 mb-2"
+                            >
+                                <i className="fas fa-upload"></i> Load Existing Site
+                            </button>
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                className="hidden" 
+                                accept=".html" 
+                                onChange={handleFileUpload} 
+                            />
                         </div>
-                        <div className="flex-1 overflow-y-auto flex">
-                            <div className="w-20 bg-slate-900 flex flex-col items-center py-4 gap-4 border-r border-slate-800">
-                                {sections.map(sec => (
-                                    <button 
-                                        key={sec.id}
-                                        onClick={() => setActiveTab(sec.id)}
-                                        className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${activeTab === sec.id ? 'bg-brand-purple text-white shadow-lg shadow-purple-500/20' : 'text-slate-500 hover:bg-slate-800 hover:text-white'}`}
-                                        title={sec.label}
-                                    >
-                                        <i className={`${sec.icon} text-lg`}></i>
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="flex-1 p-6 overflow-y-auto">
-                                {activeTab === 'global' && (
-                                    <div className="space-y-4">
-                                        <h3 className="font-bold text-lg text-white mb-4">Global Settings</h3>
-                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Colors</label><div className="flex gap-4"><div><input type="color" className="block w-8 h-8 rounded cursor-pointer border-0 p-0" value={globalConfig.primaryColor} onChange={(e) => setGlobalConfig({...globalConfig, primaryColor: e.target.value})} /><span className="text-[10px] text-slate-500">Primary</span></div><div><input type="color" className="block w-8 h-8 rounded cursor-pointer border-0 p-0" value={globalConfig.accentColor} onChange={(e) => setGlobalConfig({...globalConfig, accentColor: e.target.value})} /><span className="text-[10px] text-slate-500">Accent</span></div></div></div>
-                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Site Title</label><input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={globalConfig.siteTitle} onChange={(e) => setGlobalConfig({...globalConfig, siteTitle: e.target.value})} /></div>
-                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Logo Text</label><input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={globalConfig.logoText} onChange={(e) => setGlobalConfig({...globalConfig, logoText: e.target.value})} /></div>
-                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Footer Text</label><input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={globalConfig.footerText} onChange={(e) => setGlobalConfig({...globalConfig, footerText: e.target.value})} /></div>
-                                        <button onClick={updateGlobal} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded text-sm mt-4">Save Global Settings</button>
+                        <div className="flex border-b border-slate-800 overflow-x-auto">
+                            {['global', 'home', 'about', 'data', 'social'].map(tab => (
+                                <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider ${activeTab === tab ? 'text-brand-purple border-b-2 border-brand-purple' : 'text-slate-500 hover:text-white'}`}>{tab}</button>
+                            ))}
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            {activeTab === 'global' && (
+                                <div className="space-y-4">
+                                    <h3 className="font-bold text-slate-300">Global</h3>
+                                    <div><label className="text-xs text-slate-500">Site Title</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.config.siteTitle} onChange={e => updateConfig('siteTitle', e.target.value)} /></div>
+                                    
+                                    <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="text-xs text-brand-purple font-bold">Logo Image</label>
+                                            {content.config.logoImage && <button onClick={() => updateConfig('logoImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}
+                                        </div>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., logo.jpg" value={content.config.logoImage} onChange={e => updateConfig('logoImage', e.target.value)} />
+                                        <p className="text-[10px] text-slate-500 mt-1 italic">Upload a file with this exact name to your GitHub repository root.</p>
                                     </div>
-                                )}
-                                {activeTab === 'home' && (
-                                    <div className="space-y-4">
-                                        <h3 className="font-bold text-lg text-white mb-4">Home Section</h3>
-                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Badge Text</label><input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={homeSection.badge} onChange={(e) => setHomeSection({...homeSection, badge: e.target.value})} /></div>
-                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Headline</label><textarea className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-24" value={homeSection.headline} onChange={(e) => setHomeSection({...homeSection, headline: e.target.value})}></textarea></div>
-                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Description</label><textarea className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-24" value={homeSection.desc} onChange={(e) => setHomeSection({...homeSection, desc: e.target.value})}></textarea></div>
-                                        <button onClick={updateHome} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded text-sm mt-4">Update Home</button>
+
+                                    <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="text-xs text-brand-purple font-bold">Logo Video (MP4)</label>
+                                            {content.config.logoVideo && <button onClick={() => updateConfig('logoVideo', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}
+                                        </div>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., logo.mp4" value={content.config.logoVideo} onChange={e => updateConfig('logoVideo', e.target.value)} />
+                                        <p className="text-[10px] text-slate-500 mt-1 italic">Upload a file with this exact name to your GitHub repository root. (Overrides image)</p>
                                     </div>
-                                )}
-                                {activeTab === 'about' && (
-                                    <div className="space-y-4">
-                                        <h3 className="font-bold text-lg text-white mb-4">About Section</h3>
-                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Section Title</label><input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={aboutSection.title} onChange={(e) => setAboutSection({...aboutSection, title: e.target.value})} /></div>
-                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Bio / Text</label><textarea className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-32" value={aboutSection.bio} onChange={(e) => setAboutSection({...aboutSection, bio: e.target.value})}></textarea></div>
-                                        <div className="space-y-1"><label className="text-xs text-slate-500 uppercase">Status / Thought</label><textarea className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-20" value={aboutSection.thought} onChange={(e) => setAboutSection({...aboutSection, thought: e.target.value})}></textarea></div>
-                                        <button onClick={updateAbout} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded text-sm mt-4">Update About</button>
+
+                                    <div><label className="text-xs text-slate-500">Logo Text</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.config.logoText} onChange={e => updateConfig('logoText', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Colors</label><div className="flex gap-2"><input type="color" className="w-8 h-8 bg-transparent" value={globalData.primaryColor} onChange={e => setGlobalData({...globalData, primaryColor: e.target.value})} /><input type="color" className="w-8 h-8 bg-transparent" value={globalData.accentColor} onChange={e => setGlobalData({...globalData, accentColor: e.target.value})} /></div></div>
+                                    <div><label className="text-xs text-slate-500">Footer Text</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.config.footerText} onChange={e => updateConfig('footerText', e.target.value)} /></div>
+                                </div>
+                            )}
+                            {activeTab === 'home' && (
+                                <div className="space-y-4">
+                                    <h3 className="font-bold text-slate-300">Home</h3>
+                                    <div><label className="text-xs text-slate-500">Badge</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.home.badge} onChange={e => updateContent('home', 'badge', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Headline</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-24" value={content.home.headline} onChange={e => updateContent('home', 'headline', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Description</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-24" value={content.home.desc} onChange={e => updateContent('home', 'desc', e.target.value)} /></div>
+                                </div>
+                            )}
+                            {activeTab === 'about' && (
+                                <div className="space-y-4">
+                                    <h3 className="font-bold text-slate-300">About</h3>
+                                    
+                                    <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="text-xs text-brand-purple font-bold">Profile Image</label>
+                                            {content.about.profileImage && <button onClick={() => updateContent('about', 'profileImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}
+                                        </div>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., profile.jpg" value={content.about.profileImage} onChange={e => updateContent('about', 'profileImage', e.target.value)} />
+                                        <p className="text-[10px] text-slate-500 mt-1 italic">Upload a file with this name to your GitHub repo.</p>
                                     </div>
-                                )}
-                                {activeTab === 'portfolio' && (
-                                    <div className="space-y-4">
-                                        <h3 className="font-bold text-lg text-white mb-4">Add Project</h3>
-                                        <input type="text" placeholder="Project Title" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={newItem.project.title} onChange={(e) => setNewItem({...newItem, project: {...newItem.project, title: e.target.value}})} />
-                                        <textarea placeholder="Description" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-20" value={newItem.project.desc} onChange={(e) => setNewItem({...newItem, project: {...newItem.project, desc: e.target.value}})}></textarea>
-                                        <input type="text" placeholder="Link URL" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={newItem.project.link} onChange={(e) => setNewItem({...newItem, project: {...newItem.project, link: e.target.value}})} />
-                                        <button onClick={() => addToSection('project')} disabled={!newItem.project.title} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded text-sm mt-2 disabled:opacity-50">Add Project</button>
+
+                                    <div><label className="text-xs text-slate-500">Title</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.about.title} onChange={e => updateContent('about', 'title', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Bio</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-32" value={content.about.bio} onChange={e => updateContent('about', 'bio', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Thought</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-20" value={content.about.thought} onChange={e => updateContent('about', 'thought', e.target.value)} /></div>
+                                </div>
+                            )}
+                            {activeTab === 'data' && (
+                                <div className="space-y-6">
+                                    {/* Projects Management */}
+                                    <div className="p-3 bg-slate-800 rounded-lg">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="text-sm font-bold text-blue-400">{editingProjectIndex !== null ? 'Edit Project' : 'Add Project'}</h4>
+                                            {editingProjectIndex !== null && <button onClick={cancelEditProject} className="text-xs text-slate-500 hover:text-white">Cancel</button>}
+                                        </div>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Title" value={newItem.project.title} onChange={e => setNewItem({...newItem, project: {...newItem.project, title: e.target.value}})} />
+                                        <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-16 mb-2" placeholder="Desc" value={newItem.project.desc} onChange={e => setNewItem({...newItem, project: {...newItem.project, desc: e.target.value}})} />
+                                        <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Link" value={newItem.project.link} onChange={e => setNewItem({...newItem, project: {...newItem.project, link: e.target.value}})} />
+                                        <button onClick={handleProjectSubmit} className="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded text-xs font-bold mb-4">{editingProjectIndex !== null ? 'Update Project' : 'Add Project'}</button>
+                                        
+                                        <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Existing Projects</h5>
+                                        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                                            {content.projects.map((p, i) => (
+                                                <div key={i} className={`flex justify-between items-center bg-slate-900 p-2 rounded text-xs ${editingProjectIndex === i ? 'border border-blue-500' : ''}`}>
+                                                    <span className="truncate flex-1">{p.title}</span>
+                                                    <div className="flex gap-2 ml-2">
+                                                        <button onClick={() => editProject(i)} className="text-blue-400 hover:text-blue-300"><i className="fas fa-pencil-alt"></i></button>
+                                                        <button onClick={() => removeProject(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                )}
-                                {activeTab === 'blog' && (
-                                    <div className="space-y-4">
-                                        <h3 className="font-bold text-lg text-white mb-4">Add Blog Post</h3>
-                                        <input type="text" placeholder="Title" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={newItem.blog.title} onChange={(e) => setNewItem({...newItem, blog: {...newItem.blog, title: e.target.value}})} />
-                                        <input type="date" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm text-slate-400" value={newItem.blog.date} onChange={(e) => setNewItem({...newItem, blog: {...newItem.blog, date: e.target.value}})} />
-                                        <textarea placeholder="Content" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm h-40" value={newItem.blog.content} onChange={(e) => setNewItem({...newItem, blog: {...newItem.blog, content: e.target.value}})}></textarea>
-                                        <button onClick={() => addToSection('blog')} disabled={!newItem.blog.title} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded text-sm mt-2 disabled:opacity-50">Publish Post</button>
+
+                                    {/* Blog Management */}
+                                    <div className="p-3 bg-slate-800 rounded-lg">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="text-sm font-bold text-green-400">{editingBlogIndex !== null ? 'Edit Blog' : 'Add Blog'}</h4>
+                                            {editingBlogIndex !== null && <button onClick={cancelEditBlog} className="text-xs text-slate-500 hover:text-white">Cancel</button>}
+                                        </div>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Title" value={newItem.blog.title} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, title: e.target.value}})} />
+                                        <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-20 mb-2" placeholder="Content" value={newItem.blog.content} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, content: e.target.value}})} />
+                                        <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-16 mb-2" placeholder="Image Filenames (e.g. rna.jpg) or URLs - one per line" value={newItem.blog.images} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, images: e.target.value}})} />
+                                        <p className="text-[9px] text-slate-500 mb-2">Upload files with these names to your GitHub repo.</p>
+                                        <button onClick={handleBlogSubmit} className="w-full bg-green-600 hover:bg-green-500 py-2 rounded text-xs font-bold mb-4">{editingBlogIndex !== null ? 'Update Post' : 'Publish Post'}</button>
+                                        
+                                        <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Recent Posts</h5>
+                                        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                                            {content.blog.map((p, i) => (
+                                                <div key={i} className={`flex justify-between items-center bg-slate-900 p-2 rounded text-xs ${editingBlogIndex === i ? 'border border-green-500' : ''}`}>
+                                                    <span className="truncate flex-1">{p.title}</span>
+                                                    <div className="flex gap-2 ml-2">
+                                                        <button onClick={() => editBlog(i)} className="text-green-400 hover:text-green-300"><i className="fas fa-pencil-alt"></i></button>
+                                                        <button onClick={() => removeBlog(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                )}
-                                {activeTab === 'gallery' && (
-                                    <div className="space-y-4">
-                                        <h3 className="font-bold text-lg text-white mb-4">Add Photo</h3>
-                                        <input type="text" placeholder="Image URL (Required)" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm font-mono" value={newItem.photo.url} onChange={(e) => setNewItem({...newItem, photo: {...newItem.photo, url: e.target.value}})} />
-                                        <input type="text" placeholder="Link URL (Optional)" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" value={newItem.photo.link} onChange={(e) => setNewItem({...newItem, photo: {...newItem.photo, link: e.target.value}})} />
-                                        <button onClick={() => addToSection('photo')} disabled={!newItem.photo.url} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded text-sm mt-2 disabled:opacity-50">Add to Gallery</button>
+
+                                    {/* Gallery Management */}
+                                    <div className="p-3 bg-slate-800 rounded-lg">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="text-sm font-bold text-pink-400">{editingPhotoIndex !== null ? 'Edit Photo' : 'Add Photo'}</h4>
+                                            {editingPhotoIndex !== null && <button onClick={cancelEditPhoto} className="text-xs text-slate-500 hover:text-white">Cancel</button>}
+                                        </div>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Image Filename or URL" value={newItem.photo.url} onChange={e => setNewItem({...newItem, photo: {...newItem.photo, url: e.target.value}})} />
+                                        <button onClick={handlePhotoSubmit} className="w-full bg-pink-600 hover:bg-pink-500 py-2 rounded text-xs font-bold mb-4">{editingPhotoIndex !== null ? 'Update Photo' : 'Add to Gallery'}</button>
+                                        
+                                        <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Gallery Items</h5>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {content.gallery.map((img, i) => (
+                                                <div key={i} className={`relative group aspect-square bg-slate-900 rounded overflow-hidden ${editingPhotoIndex === i ? 'border-2 border-pink-500' : ''}`}>
+                                                    <img src={img.url} className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
+                                                        <button onClick={() => editPhoto(i)} className="text-pink-400 hover:text-white"><i className="fas fa-pencil-alt"></i></button>
+                                                        <button onClick={() => removePhoto(i)} className="text-red-500 hover:text-white"><i className="fas fa-trash"></i></button>
+                                                    </div>
+                                                    <div className="absolute bottom-0 w-full bg-black/50 text-[8px] text-center p-0.5 truncate">{img.url}</div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
+                             {activeTab === 'social' && (
+                                <div className="space-y-4">
+                                    <h3 className="font-bold text-slate-300">Social Media</h3>
+                                    
+                                    <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                        <h4 className="text-sm font-bold text-blue-300 mb-2">Add Social Link</h4>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Platform Name" value={newItem.social.platform} onChange={e => setNewItem({...newItem, social: {...newItem.social, platform: e.target.value}})} />
+                                        <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="URL" value={newItem.social.link} onChange={e => setNewItem({...newItem, social: {...newItem.social, link: e.target.value}})} />
+                                        <div className="flex gap-2 items-center mb-2">
+                                            <input className="bg-slate-900 p-2 rounded text-xs flex-1" placeholder="Icon Class (fab fa-twitter)" value={newItem.social.icon} onChange={e => setNewItem({...newItem, social: {...newItem.social, icon: e.target.value}})} />
+                                            <div className="w-8 h-8 flex items-center justify-center bg-slate-700 rounded"><i className={newItem.social.icon}></i></div>
+                                        </div>
+                                        <button onClick={addSocial} className="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded text-xs font-bold mb-4">Add Link</button>
+
+                                        <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Links</h5>
+                                        <div className="space-y-2">
+                                            {content.social && content.social.map((s, i) => (
+                                                <div key={i} className="flex justify-between items-center bg-slate-900 p-2 rounded text-xs">
+                                                    <div className="flex items-center gap-2">
+                                                        <i className={s.icon}></i>
+                                                        <span>{s.platform}</span>
+                                                    </div>
+                                                    <button onClick={() => removeSocial(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
-                    <div className="flex-1 flex flex-col h-full relative">
-                        <div className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6">
-                            <div className="flex items-center gap-4 bg-slate-800 p-1 rounded-lg">
-                                <button onClick={() => setViewMode('preview')} className={`px-4 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all ${viewMode === 'preview' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
-                                    <i className="fas fa-eye"></i> Preview
-                                </button>
-                                <button onClick={() => setViewMode('code')} className={`px-4 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all ${viewMode === 'code' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
-                                    <i className="fas fa-code"></i> Code
-                                </button>
+                    <div className="flex-1 flex flex-col h-full bg-black">
+                        <div className="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4">
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setViewMode('preview')} className={`px-3 py-1 rounded text-sm ${viewMode === 'preview' ? 'bg-slate-700' : ''}`}>Preview</button>
+                                <button onClick={() => setViewMode('code')} className={`px-3 py-1 rounded text-sm ${viewMode === 'code' ? 'bg-slate-700' : ''}`}>Code</button>
                             </div>
-                            <button onClick={copyToClipboard} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${showCopySuccess ? 'bg-green-500 text-white' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}>
-                                {showCopySuccess ? <i className="fas fa-check"></i> : <i className="fas fa-copy"></i>}
-                                {showCopySuccess ? 'Copied!' : 'Copy Code'}
-                            </button>
+                            <button onClick={copyToClipboard} className="bg-green-600 px-3 py-1 rounded text-sm font-bold">{showCopySuccess ? 'Copied!' : 'Copy Code'}</button>
                         </div>
-                        <div className="flex-1 bg-black relative overflow-hidden">
+                        <div className="flex-1 relative overflow-hidden">
                             {viewMode === 'preview' ? (
-                                <iframe ref={iframeRef} title="Site Preview" srcDoc={currentHtml} className="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-modals"></iframe>
+                                <iframe key={revision} ref={iframeRef} title="Preview" srcDoc={debouncedHtml || currentHtml} className="w-full h-full border-0 bg-white" sandbox="allow-scripts allow-same-origin allow-modals"></iframe>
                             ) : (
-                                <textarea className="w-full h-full bg-[#1e1e1e] text-slate-300 font-mono text-sm p-6 resize-none focus:outline-none" value={currentHtml} readOnly></textarea>
+                                <textarea className="w-full h-full bg-[#1e1e1e] text-slate-300 font-mono text-sm p-4 resize-none outline-none" value={currentHtml} readOnly />
                             )}
                         </div>
                     </div>

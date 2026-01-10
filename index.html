@@ -64,6 +64,12 @@
         }
         .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Embed Handling */
+        .embed-content iframe, .embed-content video, .embed-content object {
+            max-width: 100%;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
     </style>
     <script>
         tailwind.config = {
@@ -129,7 +135,7 @@
 
                     {/* Mobile Menu Dropdown */}
                     {isMenuOpen && (
-                        <div className="md:hidden absolute top-20 left-0 w-full glass-card border-t border-white/5 p-4 flex flex-col gap-2 animate-fade-in shadow-2xl">
+                        <div className="md:hidden absolute top-20 left-0 w-full glass-card border-t border-white/10 p-4 flex flex-col gap-2 animate-fade-in shadow-2xl">
                              {['home', 'portfolio', 'about', 'blog', 'gallery', 'store'].map(item => (
                                 <button 
                                     key={item} 
@@ -216,6 +222,19 @@
             </section>
         );
 
+        // --- CUSTOM EMBED SECTION ---
+        const CustomSection = ({ data }) => {
+            if (!data || !data.code) return null;
+            return (
+                <section id="custom" className="py-20 px-6">
+                    <div className="max-w-6xl mx-auto">
+                         {data.title && <h2 className="text-3xl font-bold mb-12 text-white text-center">{data.title}</h2>}
+                         <div className="embed-content flex justify-center w-full max-w-5xl mx-auto" dangerouslySetInnerHTML={{ __html: data.code }} />
+                    </div>
+                </section>
+            );
+        };
+
         const Blog = ({ posts }) => (
             <section id="blog" className="py-20 px-6">
                 <div className="max-w-4xl mx-auto">
@@ -247,11 +266,11 @@
 
             return (
                 <section id="gallery" className="py-20 px-6">
-                    <div className="max-w-6xl mx-auto">
-                        <h2 className="text-3xl font-bold mb-12 text-white">Visual Gallery</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="max-w-6xl mx-auto text-center">
+                        <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white inline-block"><span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">Visual Gallery</span></h2>
+                        <div className="flex flex-wrap justify-center gap-4">
                             {items.map((item, i) => (
-                                <div key={i} onClick={() => setSelectedImg(item.url)} className="relative aspect-square glass-card rounded-2xl overflow-hidden group cursor-pointer">
+                                <div key={i} onClick={() => setSelectedImg(item.url)} className="relative w-40 h-40 md:w-56 md:h-56 glass-card rounded-2xl overflow-hidden group cursor-pointer flex-shrink-0 transition-transform hover:scale-105">
                                     <img src={item.url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-80 group-hover:opacity-100" alt="Gallery" />
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                                         <Icon name="zoom-in" className="text-white" size={32} />
@@ -380,6 +399,7 @@
                     <Hero data={DATA.home} social={DATA.social} setView={(v) => document.getElementById(v).scrollIntoView({ behavior: 'smooth' })} />
                     <Portfolio items={DATA.projects} />
                     <About data={DATA.about} />
+                    <CustomSection data={DATA.custom} />
                     <Gallery items={DATA.gallery} />
                     <Blog posts={DATA.blog} />
 
@@ -403,6 +423,7 @@
             nav: { home: 'Home', portfolio: 'Apps', about: 'About', blog: 'Blog', gallery: 'Gallery', store: 'Store' },
             home: { badge: 'Creative Developer', headline: 'Building Digital Experiences', desc: 'Exploring code, music, and science.' },
             about: { title: 'About Me', bio: 'I am a creative developer passionate about building tools that merge art and technology.', thought: 'Code is the closest thing we have to magic.', profileImage: '' },
+            custom: { title: '', code: '' },
             projects: [
                 { title: 'Music Time Capsule', desc: 'Explore daily musical history.', link: 'https://cdcruzher.github.io/efemerides-music/', icon: 'fas fa-calendar' },
                 { title: 'Gene to Music', desc: 'Convert DNA sequences into melodies.', link: 'https://cdcruzher.github.io/gene-to-music/', icon: 'fas fa-dna' }
@@ -469,6 +490,7 @@
                             if (!importedData.social) importedData.social = [];
                             if (!importedData.store) importedData.store = [];
                             if (!importedData.config.logoVideo) importedData.config.logoVideo = '';
+                            if (!importedData.custom) importedData.custom = { title: '', code: '' };
                             
                             setContent(importedData);
                             
@@ -635,8 +657,8 @@
                 const currentSocial = content.social || [];
                 const newContent = { ...content, social: [...currentSocial, newItem.social] };
                 setContent(newContent);
-                setNewItem(prev => ({ ...prev, social: { platform: '', link: '', icon: 'fab fa-twitter' } }));
                 setDebouncedHtml(null); setRevision(r => r + 1);
+                setNewItem(prev => ({ ...prev, social: { platform: '', link: '', icon: 'fab fa-twitter' } }));
                 alert("Social Link Added!");
             };
             const removeSocial = (index) => {
@@ -712,7 +734,7 @@
                             />
                         </div>
                         <div className="flex border-b border-slate-800 overflow-x-auto">
-                            {['global', 'home', 'about', 'data', 'social', 'store'].map(tab => (
+                            {['global', 'home', 'about', 'data', 'social', 'store', 'embed'].map(tab => (
                                 <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider ${activeTab === tab ? 'text-brand-purple border-b-2 border-brand-purple' : 'text-slate-500 hover:text-white'}`}>{tab}</button>
                             ))}
                         </div>
@@ -721,7 +743,7 @@
                             {activeTab === 'global' && (
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-slate-300">Global</h3>
-                                    <div><label className="text-xs text-slate-500">Site Title</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.config.siteTitle} onChange={e => updateConfig('siteTitle', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Site Title</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.config.siteTitle} onChange={e => updateConfig('siteTitle', e.target.value)} /></div>
                                     <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
                                         <div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Logo Image</label>{content.config.logoImage && <button onClick={() => updateConfig('logoImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., logo.jpg" value={content.config.logoImage} onChange={e => updateConfig('logoImage', e.target.value)} />
@@ -730,17 +752,17 @@
                                         <div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Logo Video (MP4)</label>{content.config.logoVideo && <button onClick={() => updateConfig('logoVideo', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., logo.mp4" value={content.config.logoVideo} onChange={e => updateConfig('logoVideo', e.target.value)} />
                                     </div>
-                                    <div><label className="text-xs text-slate-500">Logo Text</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.config.logoText} onChange={e => updateConfig('logoText', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Logo Text</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.config.logoText} onChange={e => updateConfig('logoText', e.target.value)} /></div>
                                     <div><label className="text-xs text-slate-500">Colors</label><div className="flex gap-2"><input type="color" className="w-8 h-8 bg-transparent" value={globalData.primaryColor} onChange={e => setGlobalData({...globalData, primaryColor: e.target.value})} /><input type="color" className="w-8 h-8 bg-transparent" value={globalData.accentColor} onChange={e => setGlobalData({...globalData, accentColor: e.target.value})} /></div></div>
-                                    <div><label className="text-xs text-slate-500">Footer Text</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.config.footerText} onChange={e => updateConfig('footerText', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Footer Text</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.config.footerText} onChange={e => updateConfig('footerText', e.target.value)} /></div>
                                 </div>
                             )}
                             {activeTab === 'home' && (
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-slate-300">Home</h3>
-                                    <div><label className="text-xs text-slate-500">Badge</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.home.badge} onChange={e => updateContent('home', 'badge', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Headline</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-24" value={content.home.headline} onChange={e => updateContent('home', 'headline', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Description</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-24" value={content.home.desc} onChange={e => updateContent('home', 'desc', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Badge</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.home.badge} onChange={e => updateContent('home', 'badge', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Headline</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-24" value={content.home.headline} onChange={e => updateContent('home', 'headline', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Description</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-24" value={content.home.desc} onChange={e => updateContent('home', 'desc', e.target.value)} /></div>
                                 </div>
                             )}
                             {activeTab === 'about' && (
@@ -750,9 +772,9 @@
                                         <div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Profile Image</label>{content.about.profileImage && <button onClick={() => updateContent('about', 'profileImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., profile.jpg" value={content.about.profileImage} onChange={e => updateContent('about', 'profileImage', e.target.value)} />
                                     </div>
-                                    <div><label className="text-xs text-slate-500">Title</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.about.title} onChange={e => updateContent('about', 'title', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Bio</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-32" value={content.about.bio} onChange={e => updateContent('about', 'bio', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Thought</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-20" value={content.about.thought} onChange={e => updateContent('about', 'thought', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Title</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.about.title} onChange={e => updateContent('about', 'title', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Bio</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-32" value={content.about.bio} onChange={e => updateContent('about', 'bio', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Thought</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-20" value={content.about.thought} onChange={e => updateContent('about', 'thought', e.target.value)} /></div>
                                 </div>
                             )}
                             {activeTab === 'data' && (
@@ -839,6 +861,26 @@
                                                 </div>
                                             ))}
                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'embed' && (
+                                <div className="space-y-4">
+                                    <h3 className="font-bold text-slate-300">Custom Embed</h3>
+                                    <p className="text-xs text-slate-500">Add custom HTML, iframes (YouTube, Maps), or widgets here.</p>
+                                    <div>
+                                        <label className="text-xs text-slate-500">Section Title (Optional)</label>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.custom.title} onChange={e => updateContent('custom', 'title', e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-slate-500">HTML Code</label>
+                                        <textarea 
+                                            className="w-full bg-slate-900 p-2 rounded text-sm h-64 font-mono text-xs" 
+                                            placeholder="<iframe src='...'></iframe>" 
+                                            value={content.custom.code} 
+                                            onChange={e => updateContent('custom', 'code', e.target.value)}
+                                        ></textarea>
                                     </div>
                                 </div>
                             )}

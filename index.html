@@ -87,6 +87,8 @@
         const Icon = ({ name, size = 20, className }) => <i data-lucide={name} width={size} height={size} className={className}></i>;
 
         const NavBar = ({ setView, view }) => {
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
             const t = DATA.nav;
             const logoSrc = DATA.config.logoImage || "https://ui-avatars.com/api/?name=CD&background=6366f1&color=fff&size=128";
@@ -114,21 +116,48 @@
                             <span className="font-bold text-xl tracking-tight text-white">{DATA.config.logoText}</span>
                         </div>
                         <div className="hidden md:flex items-center gap-2">
-                            {['home', 'portfolio', 'about', 'blog', 'gallery'].map(item => (
+                            {['home', 'portfolio', 'about', 'blog', 'gallery', 'store'].map(item => (
                                 <button key={item} onClick={() => setView(item)} className={\`px-4 py-2 rounded-full text-sm font-medium transition-all \${view === item ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-400 hover:text-white hover:bg-white/5'}\`}>
                                     {t[item] || item}
                                 </button>
                             ))}
                         </div>
-                        <div className="md:hidden text-slate-300"><Icon name="menu" /></div>
+                        <div className="md:hidden text-slate-300 cursor-pointer p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                            <Icon name={isMenuOpen ? "x" : "menu"} />
+                        </div>
                     </div>
+
+                    {/* Mobile Menu Dropdown */}
+                    {isMenuOpen && (
+                        <div className="md:hidden absolute top-20 left-0 w-full glass-card border-t border-white/5 p-4 flex flex-col gap-2 animate-fade-in shadow-2xl">
+                             {['home', 'portfolio', 'about', 'blog', 'gallery', 'store'].map(item => (
+                                <button 
+                                    key={item} 
+                                    onClick={() => { setView(item); setIsMenuOpen(false); }} 
+                                    className={\`text-left px-4 py-3 rounded-xl font-medium transition-all \${view === item ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}\`}
+                                >
+                                    {t[item] || item}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </nav>
             );
         };
 
-        const Hero = ({ data, setView }) => (
-            <section id="home" className="pt-32 pb-20 px-6 text-center animate-fade-in">
-                <div className="max-w-3xl mx-auto">
+        const Hero = ({ data, social, setView }) => (
+            <section id="home" className="pt-24 pb-4 px-6 text-center animate-fade-in">
+                <div className="max-w-3xl mx-auto flex flex-col items-center">
+                    
+                    {/* Social Icons */}
+                    <div className="flex gap-6 mb-8 animate-fade-in" style={{animationDelay: '0.1s'}}>
+                        {social && social.map((item, i) => (
+                            <a key={i} href={item.link} target="_blank" className="text-slate-400 hover:text-white transition-all transform hover:scale-110">
+                                <i className={\`\${item.icon} text-2xl\`} />
+                            </a>
+                        ))}
+                    </div>
+
                     <div className="inline-block px-4 py-1.5 mb-6 text-xs font-mono text-purple-300 bg-purple-900/30 rounded-full border border-purple-500/30 backdrop-blur-sm">{data.badge}</div>
                     <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-8 leading-tight tracking-tight">{data.headline}</h1>
                     <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">{data.desc}</p>
@@ -141,9 +170,9 @@
         );
 
         const Portfolio = ({ items }) => (
-            <section id="portfolio" className="py-20 px-6">
+            <section id="portfolio" className="py-4 px-6">
                 <div className="max-w-6xl mx-auto">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-12 text-white flex items-center gap-3"><span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">Projects</span></h2>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white flex items-center gap-3"><span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">Projects</span></h2>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {items.map((project, i) => (
                             <a key={i} href={project.link} target="_blank" className="glass-card rounded-3xl p-6 group cursor-pointer flex flex-col h-full relative overflow-hidden">
@@ -257,6 +286,45 @@
             );
         };
 
+        const Store = ({ items, setView }) => (
+            <section id="store" className="min-h-screen pt-32 pb-20 px-6 animate-fade-in">
+                <div className="max-w-6xl mx-auto">
+                    <div className="flex justify-between items-center mb-12">
+                        <h2 className="text-4xl font-bold text-white">Store</h2>
+                        <button onClick={() => setView('home')} className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors border border-slate-600 text-slate-300 hover:text-white">
+                            <Icon name="home" size={18} /> Back to Home
+                        </button>
+                    </div>
+                    {items && items.length > 0 ? (
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {items.map((item, i) => (
+                                <div key={i} className="glass-card rounded-3xl overflow-hidden flex flex-col group">
+                                    <div className="relative h-64 overflow-hidden bg-slate-900/50">
+                                        <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                        <div className="absolute top-4 right-4 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full text-green-400 font-bold border border-green-500/20 shadow-lg">
+                                            {item.price}
+                                        </div>
+                                    </div>
+                                    <div className="p-6 flex flex-col flex-grow">
+                                        <h3 className="text-2xl font-bold text-white mb-2">{item.title}</h3>
+                                        <p className="text-slate-400 text-sm mb-6 flex-grow leading-relaxed">{item.description}</p>
+                                        <a href={item.link} target="_blank" className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-center transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center gap-2 group-hover:translate-y-[-2px]">
+                                            Buy Now <Icon name="shopping-bag" size={18} />
+                                        </a>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-20 text-slate-500">
+                            <Icon name="shopping-bag" size={48} className="mx-auto mb-4 opacity-50" />
+                            <p>No products available yet.</p>
+                        </div>
+                    )}
+                </div>
+            </section>
+        );
+
         const Socials = ({ items }) => (
             <div className="flex justify-center gap-6 mt-8 mb-6">
                 {items && items.map((item, i) => (
@@ -279,6 +347,8 @@
                         } else {
                             const el = document.getElementById(id);
                             if (el) el.scrollIntoView({ behavior: 'smooth' });
+                            // If user clicks Store tab in admin, switch view to store
+                            if (id === 'store') setView('store');
                         }
                     }
                 };
@@ -290,15 +360,24 @@
                 if (window.lucide) window.lucide.createIcons();
             });
 
+            // Exclusive Store View
+            if (view === 'store') {
+                return <Store items={DATA.store} setView={setView} />;
+            }
+
             return (
                 <div className="pb-20 pt-20">
                     <NavBar setView={(v) => {
                         setView(v);
-                        const el = document.getElementById(v);
-                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        if (v !== 'store') {
+                            setTimeout(() => {
+                                const el = document.getElementById(v);
+                                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                            }, 100);
+                        }
                     }} view={view} />
                     
-                    <Hero data={DATA.home} setView={(v) => document.getElementById(v).scrollIntoView({ behavior: 'smooth' })} />
+                    <Hero data={DATA.home} social={DATA.social} setView={(v) => document.getElementById(v).scrollIntoView({ behavior: 'smooth' })} />
                     <Portfolio items={DATA.projects} />
                     <About data={DATA.about} />
                     <Gallery items={DATA.gallery} />
@@ -321,7 +400,7 @@
 
         const defaultContent = {
             config: { logoText: 'MY.PORTFOLIO', footerText: '© 2025 All Rights Reserved.', siteTitle: 'My Portfolio', logoImage: '', logoVideo: '' },
-            nav: { home: 'Home', portfolio: 'Apps', about: 'About', blog: 'Blog', gallery: 'Gallery' },
+            nav: { home: 'Home', portfolio: 'Apps', about: 'About', blog: 'Blog', gallery: 'Gallery', store: 'Store' },
             home: { badge: 'Creative Developer', headline: 'Building Digital Experiences', desc: 'Exploring code, music, and science.' },
             about: { title: 'About Me', bio: 'I am a creative developer passionate about building tools that merge art and technology.', thought: 'Code is the closest thing we have to magic.', profileImage: '' },
             projects: [
@@ -332,6 +411,7 @@
                 { title: 'Hello World', content: 'Welcome to my new portfolio.', date: '2025-01-01', category: 'Update', images: [] }
             ],
             gallery: [],
+            store: [], // New Store Data
             social: [
                 { platform: 'Twitter', link: '#', icon: 'fab fa-twitter' },
                 { platform: 'GitHub', link: '#', icon: 'fab fa-github' }
@@ -342,7 +422,7 @@
             const [globalData, setGlobalData] = useState({ primaryColor: '#8b5cf6', accentColor: '#06b6d4' });
             const [content, setContent] = useState(defaultContent);
             const [debouncedHtml, setDebouncedHtml] = useState('');
-            const [revision, setRevision] = useState(0); // Forces iframe refresh
+            const [revision, setRevision] = useState(0); 
             
             const [activeTab, setActiveTab] = useState('global'); 
             const [viewMode, setViewMode] = useState('preview');
@@ -354,13 +434,15 @@
                 project: { title: '', desc: '', link: '', icon: 'fas fa-code' },
                 blog: { title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'Update', images: '' },
                 photo: { url: '', link: '' },
-                social: { platform: '', link: '', icon: 'fab fa-twitter' }
+                social: { platform: '', link: '', icon: 'fab fa-twitter' },
+                store: { title: '', price: '', image: '', link: '', description: '' } // Store Item
             });
 
             // Edit Modes
             const [editingProjectIndex, setEditingProjectIndex] = useState(null);
             const [editingBlogIndex, setEditingBlogIndex] = useState(null);
             const [editingPhotoIndex, setEditingPhotoIndex] = useState(null);
+            const [editingStoreIndex, setEditingStoreIndex] = useState(null); // Store Edit Mode
 
             // --- IMPORT FUNCTION ---
             const handleFileUpload = (event) => {
@@ -385,11 +467,13 @@
                             
                             // Ensure structure is compatible with updates
                             if (!importedData.social) importedData.social = [];
+                            if (!importedData.store) importedData.store = [];
                             if (!importedData.config.logoVideo) importedData.config.logoVideo = '';
                             
                             setContent(importedData);
                             
                             // Force immediate update to state AND debounced HTML
+                            // Use isPreview=true initially so user sees effect immediately
                             const code = generateSiteCode({
                                 primaryColor: importedData.config.primaryColor,
                                 accentColor: importedData.config.accentColor || '#06b6d4'
@@ -562,6 +646,42 @@
                 setDebouncedHtml(null); setRevision(r => r + 1);
             };
 
+            // --- STORE ACTIONS ---
+            const handleStoreSubmit = () => {
+                if(!newItem.store.title) return;
+                let newContent;
+                if (editingStoreIndex !== null) {
+                    newContent = { ...content, store: [...content.store] };
+                    newContent.store[editingStoreIndex] = newItem.store;
+                    setEditingStoreIndex(null);
+                    alert("Product Updated!");
+                } else {
+                    // Check if store array exists
+                    const currentStore = content.store || [];
+                    newContent = { ...content, store: [newItem.store, ...currentStore] };
+                    alert("Product Added!");
+                }
+                setContent(newContent);
+                setNewItem(prev => ({ ...prev, store: { title: '', price: '', image: '', link: '', description: '' } }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+             const editStore = (index) => {
+                setNewItem(prev => ({ ...prev, store: content.store[index] }));
+                setEditingStoreIndex(index);
+            };
+            const removeStore = (index) => {
+                if(!confirm("Delete this product?")) return;
+                const newStore = content.store.filter((_, i) => i !== index);
+                const newContent = { ...content, store: newStore };
+                setContent(newContent);
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+             const cancelEditStore = () => {
+                setNewItem(prev => ({ ...prev, store: { title: '', price: '', image: '', link: '', description: '' } }));
+                setEditingStoreIndex(null);
+            }
+
+
             const copyToClipboard = () => {
                 const textArea = document.createElement("textarea");
                 textArea.value = currentHtml;
@@ -592,172 +712,137 @@
                             />
                         </div>
                         <div className="flex border-b border-slate-800 overflow-x-auto">
-                            {['global', 'home', 'about', 'data', 'social'].map(tab => (
+                            {['global', 'home', 'about', 'data', 'social', 'store'].map(tab => (
                                 <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider ${activeTab === tab ? 'text-brand-purple border-b-2 border-brand-purple' : 'text-slate-500 hover:text-white'}`}>{tab}</button>
                             ))}
                         </div>
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            {/* ... (Previous Tabs: global, home, about, data preserved) ... */}
                             {activeTab === 'global' && (
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-slate-300">Global</h3>
-                                    <div><label className="text-xs text-slate-500">Site Title</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.config.siteTitle} onChange={e => updateConfig('siteTitle', e.target.value)} /></div>
-                                    
+                                    <div><label className="text-xs text-slate-500">Site Title</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.config.siteTitle} onChange={e => updateConfig('siteTitle', e.target.value)} /></div>
                                     <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <label className="text-xs text-brand-purple font-bold">Logo Image</label>
-                                            {content.config.logoImage && <button onClick={() => updateConfig('logoImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}
-                                        </div>
+                                        <div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Logo Image</label>{content.config.logoImage && <button onClick={() => updateConfig('logoImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., logo.jpg" value={content.config.logoImage} onChange={e => updateConfig('logoImage', e.target.value)} />
-                                        <p className="text-[10px] text-slate-500 mt-1 italic">Upload a file with this exact name to your GitHub repository root.</p>
                                     </div>
-
                                     <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <label className="text-xs text-brand-purple font-bold">Logo Video (MP4)</label>
-                                            {content.config.logoVideo && <button onClick={() => updateConfig('logoVideo', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}
-                                        </div>
+                                        <div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Logo Video (MP4)</label>{content.config.logoVideo && <button onClick={() => updateConfig('logoVideo', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., logo.mp4" value={content.config.logoVideo} onChange={e => updateConfig('logoVideo', e.target.value)} />
-                                        <p className="text-[10px] text-slate-500 mt-1 italic">Upload a file with this exact name to your GitHub repository root. (Overrides image)</p>
                                     </div>
-
-                                    <div><label className="text-xs text-slate-500">Logo Text</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.config.logoText} onChange={e => updateConfig('logoText', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Logo Text</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.config.logoText} onChange={e => updateConfig('logoText', e.target.value)} /></div>
                                     <div><label className="text-xs text-slate-500">Colors</label><div className="flex gap-2"><input type="color" className="w-8 h-8 bg-transparent" value={globalData.primaryColor} onChange={e => setGlobalData({...globalData, primaryColor: e.target.value})} /><input type="color" className="w-8 h-8 bg-transparent" value={globalData.accentColor} onChange={e => setGlobalData({...globalData, accentColor: e.target.value})} /></div></div>
-                                    <div><label className="text-xs text-slate-500">Footer Text</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.config.footerText} onChange={e => updateConfig('footerText', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Footer Text</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.config.footerText} onChange={e => updateConfig('footerText', e.target.value)} /></div>
                                 </div>
                             )}
                             {activeTab === 'home' && (
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-slate-300">Home</h3>
-                                    <div><label className="text-xs text-slate-500">Badge</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.home.badge} onChange={e => updateContent('home', 'badge', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Headline</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-24" value={content.home.headline} onChange={e => updateContent('home', 'headline', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Description</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-24" value={content.home.desc} onChange={e => updateContent('home', 'desc', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Badge</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.home.badge} onChange={e => updateContent('home', 'badge', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Headline</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-24" value={content.home.headline} onChange={e => updateContent('home', 'headline', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Description</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-24" value={content.home.desc} onChange={e => updateContent('home', 'desc', e.target.value)} /></div>
                                 </div>
                             )}
                             {activeTab === 'about' && (
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-slate-300">About</h3>
-                                    
                                     <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <label className="text-xs text-brand-purple font-bold">Profile Image</label>
-                                            {content.about.profileImage && <button onClick={() => updateContent('about', 'profileImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}
-                                        </div>
+                                        <div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Profile Image</label>{content.about.profileImage && <button onClick={() => updateContent('about', 'profileImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., profile.jpg" value={content.about.profileImage} onChange={e => updateContent('about', 'profileImage', e.target.value)} />
-                                        <p className="text-[10px] text-slate-500 mt-1 italic">Upload a file with this name to your GitHub repo.</p>
                                     </div>
-
-                                    <div><label className="text-xs text-slate-500">Title</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.about.title} onChange={e => updateContent('about', 'title', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Bio</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-32" value={content.about.bio} onChange={e => updateContent('about', 'bio', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Thought</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-20" value={content.about.thought} onChange={e => updateContent('about', 'thought', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Title</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.about.title} onChange={e => updateContent('about', 'title', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Bio</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-32" value={content.about.bio} onChange={e => updateContent('about', 'bio', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Thought</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-20" value={content.about.thought} onChange={e => updateContent('about', 'thought', e.target.value)} /></div>
                                 </div>
                             )}
                             {activeTab === 'data' && (
                                 <div className="space-y-6">
-                                    {/* Projects Management */}
                                     <div className="p-3 bg-slate-800 rounded-lg">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <h4 className="text-sm font-bold text-blue-400">{editingProjectIndex !== null ? 'Edit Project' : 'Add Project'}</h4>
-                                            {editingProjectIndex !== null && <button onClick={cancelEditProject} className="text-xs text-slate-500 hover:text-white">Cancel</button>}
-                                        </div>
+                                        <div className="flex justify-between items-center mb-2"><h4 className="text-sm font-bold text-blue-400">{editingProjectIndex !== null ? 'Edit Project' : 'Add Project'}</h4>{editingProjectIndex !== null && <button onClick={cancelEditProject} className="text-xs text-slate-500 hover:text-white">Cancel</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Title" value={newItem.project.title} onChange={e => setNewItem({...newItem, project: {...newItem.project, title: e.target.value}})} />
                                         <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-16 mb-2" placeholder="Desc" value={newItem.project.desc} onChange={e => setNewItem({...newItem, project: {...newItem.project, desc: e.target.value}})} />
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Link" value={newItem.project.link} onChange={e => setNewItem({...newItem, project: {...newItem.project, link: e.target.value}})} />
                                         <button onClick={handleProjectSubmit} className="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded text-xs font-bold mb-4">{editingProjectIndex !== null ? 'Update Project' : 'Add Project'}</button>
-                                        
                                         <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Existing Projects</h5>
                                         <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                                             {content.projects.map((p, i) => (
-                                                <div key={i} className={`flex justify-between items-center bg-slate-900 p-2 rounded text-xs ${editingProjectIndex === i ? 'border border-blue-500' : ''}`}>
-                                                    <span className="truncate flex-1">{p.title}</span>
-                                                    <div className="flex gap-2 ml-2">
-                                                        <button onClick={() => editProject(i)} className="text-blue-400 hover:text-blue-300"><i className="fas fa-pencil-alt"></i></button>
-                                                        <button onClick={() => removeProject(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button>
-                                                    </div>
-                                                </div>
+                                                <div key={i} className={`flex justify-between items-center bg-slate-900 p-2 rounded text-xs ${editingProjectIndex === i ? 'border border-blue-500' : ''}`}><span className="truncate flex-1">{p.title}</span><div className="flex gap-2 ml-2"><button onClick={() => editProject(i)} className="text-blue-400 hover:text-blue-300"><i className="fas fa-pencil-alt"></i></button><button onClick={() => removeProject(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button></div></div>
                                             ))}
                                         </div>
                                     </div>
-
-                                    {/* Blog Management */}
                                     <div className="p-3 bg-slate-800 rounded-lg">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <h4 className="text-sm font-bold text-green-400">{editingBlogIndex !== null ? 'Edit Blog' : 'Add Blog'}</h4>
-                                            {editingBlogIndex !== null && <button onClick={cancelEditBlog} className="text-xs text-slate-500 hover:text-white">Cancel</button>}
-                                        </div>
+                                        <div className="flex justify-between items-center mb-2"><h4 className="text-sm font-bold text-green-400">{editingBlogIndex !== null ? 'Edit Blog' : 'Add Blog'}</h4>{editingBlogIndex !== null && <button onClick={cancelEditBlog} className="text-xs text-slate-500 hover:text-white">Cancel</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Title" value={newItem.blog.title} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, title: e.target.value}})} />
                                         <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-20 mb-2" placeholder="Content" value={newItem.blog.content} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, content: e.target.value}})} />
-                                        <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-16 mb-2" placeholder="Image Filenames (e.g. rna.jpg) or URLs - one per line" value={newItem.blog.images} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, images: e.target.value}})} />
-                                        <p className="text-[9px] text-slate-500 mb-2">Upload files with these names to your GitHub repo.</p>
+                                        <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-16 mb-2" placeholder="Image Filenames (one per line)" value={newItem.blog.images} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, images: e.target.value}})} />
                                         <button onClick={handleBlogSubmit} className="w-full bg-green-600 hover:bg-green-500 py-2 rounded text-xs font-bold mb-4">{editingBlogIndex !== null ? 'Update Post' : 'Publish Post'}</button>
-                                        
                                         <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Recent Posts</h5>
                                         <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                                             {content.blog.map((p, i) => (
-                                                <div key={i} className={`flex justify-between items-center bg-slate-900 p-2 rounded text-xs ${editingBlogIndex === i ? 'border border-green-500' : ''}`}>
-                                                    <span className="truncate flex-1">{p.title}</span>
-                                                    <div className="flex gap-2 ml-2">
-                                                        <button onClick={() => editBlog(i)} className="text-green-400 hover:text-green-300"><i className="fas fa-pencil-alt"></i></button>
-                                                        <button onClick={() => removeBlog(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button>
-                                                    </div>
-                                                </div>
+                                                <div key={i} className={`flex justify-between items-center bg-slate-900 p-2 rounded text-xs ${editingBlogIndex === i ? 'border border-green-500' : ''}`}><span className="truncate flex-1">{p.title}</span><div className="flex gap-2 ml-2"><button onClick={() => editBlog(i)} className="text-green-400 hover:text-green-300"><i className="fas fa-pencil-alt"></i></button><button onClick={() => removeBlog(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button></div></div>
                                             ))}
                                         </div>
                                     </div>
-
-                                    {/* Gallery Management */}
                                     <div className="p-3 bg-slate-800 rounded-lg">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <h4 className="text-sm font-bold text-pink-400">{editingPhotoIndex !== null ? 'Edit Photo' : 'Add Photo'}</h4>
-                                            {editingPhotoIndex !== null && <button onClick={cancelEditPhoto} className="text-xs text-slate-500 hover:text-white">Cancel</button>}
-                                        </div>
+                                        <div className="flex justify-between items-center mb-2"><h4 className="text-sm font-bold text-pink-400">{editingPhotoIndex !== null ? 'Edit Photo' : 'Add Photo'}</h4>{editingPhotoIndex !== null && <button onClick={cancelEditPhoto} className="text-xs text-slate-500 hover:text-white">Cancel</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Image Filename or URL" value={newItem.photo.url} onChange={e => setNewItem({...newItem, photo: {...newItem.photo, url: e.target.value}})} />
                                         <button onClick={handlePhotoSubmit} className="w-full bg-pink-600 hover:bg-pink-500 py-2 rounded text-xs font-bold mb-4">{editingPhotoIndex !== null ? 'Update Photo' : 'Add to Gallery'}</button>
-                                        
                                         <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Gallery Items</h5>
                                         <div className="grid grid-cols-3 gap-2">
                                             {content.gallery.map((img, i) => (
-                                                <div key={i} className={`relative group aspect-square bg-slate-900 rounded overflow-hidden ${editingPhotoIndex === i ? 'border-2 border-pink-500' : ''}`}>
-                                                    <img src={img.url} className="w-full h-full object-cover" />
-                                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
-                                                        <button onClick={() => editPhoto(i)} className="text-pink-400 hover:text-white"><i className="fas fa-pencil-alt"></i></button>
-                                                        <button onClick={() => removePhoto(i)} className="text-red-500 hover:text-white"><i className="fas fa-trash"></i></button>
-                                                    </div>
-                                                    <div className="absolute bottom-0 w-full bg-black/50 text-[8px] text-center p-0.5 truncate">{img.url}</div>
-                                                </div>
+                                                <div key={i} className={`relative group aspect-square bg-slate-900 rounded overflow-hidden ${editingPhotoIndex === i ? 'border-2 border-pink-500' : ''}`}><img src={img.url} className="w-full h-full object-cover" /><div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2"><button onClick={() => editPhoto(i)} className="text-pink-400 hover:text-white"><i className="fas fa-pencil-alt"></i></button><button onClick={() => removePhoto(i)} className="text-red-500 hover:text-white"><i className="fas fa-trash"></i></button></div><div className="absolute bottom-0 w-full bg-black/50 text-[8px] text-center p-0.5 truncate">{img.url}</div></div>
                                             ))}
                                         </div>
                                     </div>
                                 </div>
                             )}
+
                              {activeTab === 'social' && (
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-slate-300">Social Media</h3>
-                                    
                                     <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
                                         <h4 className="text-sm font-bold text-blue-300 mb-2">Add Social Link</h4>
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Platform Name" value={newItem.social.platform} onChange={e => setNewItem({...newItem, social: {...newItem.social, platform: e.target.value}})} />
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="URL" value={newItem.social.link} onChange={e => setNewItem({...newItem, social: {...newItem.social, link: e.target.value}})} />
-                                        <div className="flex gap-2 items-center mb-2">
-                                            <input className="bg-slate-900 p-2 rounded text-xs flex-1" placeholder="Icon Class (fab fa-twitter)" value={newItem.social.icon} onChange={e => setNewItem({...newItem, social: {...newItem.social, icon: e.target.value}})} />
-                                            <div className="w-8 h-8 flex items-center justify-center bg-slate-700 rounded"><i className={newItem.social.icon}></i></div>
-                                        </div>
+                                        <div className="flex gap-2 items-center mb-2"><input className="bg-slate-900 p-2 rounded text-xs flex-1" placeholder="Icon Class (fab fa-twitter)" value={newItem.social.icon} onChange={e => setNewItem({...newItem, social: {...newItem.social, icon: e.target.value}})} /><div className="w-8 h-8 flex items-center justify-center bg-slate-700 rounded"><i className={newItem.social.icon}></i></div></div>
                                         <button onClick={addSocial} className="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded text-xs font-bold mb-4">Add Link</button>
-
                                         <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Links</h5>
+                                        <div className="space-y-2">{content.social && content.social.map((s, i) => (<div key={i} className="flex justify-between items-center bg-slate-900 p-2 rounded text-xs"><div className="flex items-center gap-2"><i className={s.icon}></i><span>{s.platform}</span></div><button onClick={() => removeSocial(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button></div>))}</div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'store' && (
+                                <div className="space-y-4">
+                                    <h3 className="font-bold text-slate-300">Store Products</h3>
+                                    <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="text-sm font-bold text-yellow-400">{editingStoreIndex !== null ? 'Edit Product' : 'Add Product'}</h4>
+                                            {editingStoreIndex !== null && <button onClick={cancelEditStore} className="text-xs text-slate-500 hover:text-white">Cancel</button>}
+                                        </div>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Product Name" value={newItem.store.title} onChange={e => setNewItem({...newItem, store: {...newItem.store, title: e.target.value}})} />
+                                        <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Price (e.g. $19.99)" value={newItem.store.price} onChange={e => setNewItem({...newItem, store: {...newItem.store, price: e.target.value}})} />
+                                        <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Image Filename" value={newItem.store.image} onChange={e => setNewItem({...newItem, store: {...newItem.store, image: e.target.value}})} />
+                                        <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-16 mb-2" placeholder="Description" value={newItem.store.description} onChange={e => setNewItem({...newItem, store: {...newItem.store, description: e.target.value}})} />
+                                        <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Payment Link" value={newItem.store.link} onChange={e => setNewItem({...newItem, store: {...newItem.store, link: e.target.value}})} />
+                                        <button onClick={handleStoreSubmit} className="w-full bg-yellow-600 hover:bg-yellow-500 py-2 rounded text-xs font-bold mb-4 text-slate-900">{editingStoreIndex !== null ? 'Update Product' : 'Add Product'}</button>
+
+                                        <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Inventory</h5>
                                         <div className="space-y-2">
-                                            {content.social && content.social.map((s, i) => (
-                                                <div key={i} className="flex justify-between items-center bg-slate-900 p-2 rounded text-xs">
-                                                    <div className="flex items-center gap-2">
-                                                        <i className={s.icon}></i>
-                                                        <span>{s.platform}</span>
+                                            {content.store && content.store.map((item, i) => (
+                                                <div key={i} className={`flex justify-between items-center bg-slate-900 p-2 rounded text-xs ${editingStoreIndex === i ? 'border border-yellow-500' : ''}`}>
+                                                    <span className="truncate flex-1">{item.title}</span>
+                                                    <div className="flex gap-2 ml-2">
+                                                        <button onClick={() => editStore(i)} className="text-yellow-400 hover:text-yellow-300"><i className="fas fa-pencil-alt"></i></button>
+                                                        <button onClick={() => removeStore(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button>
                                                     </div>
-                                                    <button onClick={() => removeSocial(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                 </div>
                             )}
+
                         </div>
                     </div>
                     <div className="flex-1 flex flex-col h-full bg-black">

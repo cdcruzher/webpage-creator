@@ -64,12 +64,6 @@
         }
         .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        /* Embed Handling */
-        .embed-content iframe, .embed-content video, .embed-content object {
-            max-width: 100%;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
     </style>
     <script>
         tailwind.config = {
@@ -93,8 +87,6 @@
         const Icon = ({ name, size = 20, className }) => <i data-lucide={name} width={size} height={size} className={className}></i>;
 
         const NavBar = ({ setView, view }) => {
-            const [isMenuOpen, setIsMenuOpen] = useState(false);
-
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
             const t = DATA.nav;
             const logoSrc = DATA.config.logoImage || "https://ui-avatars.com/api/?name=CD&background=6366f1&color=fff&size=128";
@@ -128,25 +120,8 @@
                                 </button>
                             ))}
                         </div>
-                        <div className="md:hidden text-slate-300 cursor-pointer p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                            <Icon name={isMenuOpen ? "x" : "menu"} />
-                        </div>
+                        <div className="md:hidden text-slate-300"><Icon name="menu" /></div>
                     </div>
-
-                    {/* Mobile Menu Dropdown */}
-                    {isMenuOpen && (
-                        <div className="md:hidden absolute top-20 left-0 w-full glass-card border-t border-white/10 p-4 flex flex-col gap-2 animate-fade-in shadow-2xl">
-                             {['home', 'portfolio', 'about', 'blog', 'gallery', 'store'].map(item => (
-                                <button 
-                                    key={item} 
-                                    onClick={() => { setView(item); setIsMenuOpen(false); }} 
-                                    className={\`text-left px-4 py-3 rounded-xl font-medium transition-all \${view === item ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}\`}
-                                >
-                                    {t[item] || item}
-                                </button>
-                            ))}
-                        </div>
-                    )}
                 </nav>
             );
         };
@@ -235,31 +210,46 @@
             );
         };
 
-        const Blog = ({ posts }) => (
-            <section id="blog" className="py-20 px-6">
-                <div className="max-w-4xl mx-auto">
-                    <h2 className="text-3xl font-bold mb-12 text-white">Latest Thoughts</h2>
-                    <div className="space-y-6">
-                        {posts.map((post, i) => (
-                            <article key={i} className="glass-card p-8 rounded-3xl hover:border-purple-500/30 transition-colors">
-                                <div className="flex items-center gap-3 text-xs text-slate-400 mb-4 font-mono">
-                                    <span className="text-purple-400 bg-purple-500/10 px-2 py-1 rounded">{post.category}</span><span>•</span><span>{new Date(post.date).toLocaleDateString()}</span>
-                                </div>
-                                <h3 className="text-2xl font-bold mb-4 text-slate-100">{post.title}</h3>
-                                {post.images && post.images.length > 0 && (
-                                    <div className={\`grid gap-4 mb-6 \${post.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}\`}>
-                                        {post.images.map((img, idx) => (
-                                            <img key={idx} src={img} alt="Blog attachment" className="rounded-xl w-full h-48 object-cover border border-slate-700/50" />
-                                        ))}
+        const Blog = ({ posts, setView, isHome }) => {
+            const displayPosts = isHome ? posts.slice(0, 1) : posts;
+            
+            return (
+                <section id="blog" className={\`px-6 \${isHome ? 'py-20' : 'min-h-screen pt-32 pb-20 animate-fade-in'}\`}>
+                    <div className="max-w-4xl mx-auto">
+                        <div className="flex justify-between items-center mb-12">
+                            <h2 className="text-3xl font-bold text-white">{isHome ? 'Latest Update' : 'Blog'}</h2>
+                            {isHome ? (
+                                <button onClick={() => setView('blog')} className="text-slate-400 hover:text-white flex items-center gap-2 transition-colors">
+                                    Read All <Icon name="arrow-right" size={16} />
+                                </button>
+                            ) : (
+                                <button onClick={() => setView('home')} className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors border border-slate-600 text-slate-300 hover:text-white">
+                                    <Icon name="home" size={18} /> Back to Home
+                                </button>
+                            )}
+                        </div>
+                        <div className="space-y-6">
+                            {displayPosts.map((post, i) => (
+                                <article key={i} className="glass-card p-8 rounded-3xl hover:border-purple-500/30 transition-colors">
+                                    <div className="flex items-center gap-3 text-xs text-slate-400 mb-4 font-mono">
+                                        <span className="text-purple-400 bg-purple-500/10 px-2 py-1 rounded">{post.category}</span><span>•</span><span>{new Date(post.date).toLocaleDateString()}</span>
                                     </div>
-                                )}
-                                <div className="text-slate-400 leading-relaxed whitespace-pre-line">{post.content}</div>
-                            </article>
-                        ))}
+                                    <h3 className="text-2xl font-bold mb-4 text-slate-100">{post.title}</h3>
+                                    {post.images && post.images.length > 0 && (
+                                        <div className={\`grid gap-4 mb-6 \${post.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}\`}>
+                                            {post.images.map((img, idx) => (
+                                                <img key={idx} src={img} alt="Blog attachment" className="rounded-xl w-full h-48 object-cover border border-slate-700/50" />
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div className="text-slate-400 leading-relaxed whitespace-pre-line">{post.content}</div>
+                                </article>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section>
-        );
+                </section>
+            );
+        };
 
         const Gallery = ({ items }) => {
             const [selectedImg, setSelectedImg] = useState(null);
@@ -368,6 +358,8 @@
                             if (el) el.scrollIntoView({ behavior: 'smooth' });
                             // If user clicks Store tab in admin, switch view to store
                             if (id === 'store') setView('store');
+                             // If user clicks Blog tab in admin, switch view to blog page (optional, but consistent with store)
+                            if (id === 'blog') setView('blog'); 
                         }
                     }
                 };
@@ -381,15 +373,40 @@
 
             // Exclusive Store View
             if (view === 'store') {
-                return <Store items={DATA.store} setView={setView} />;
+                return (
+                    <div className="bg-slate-950 min-h-screen">
+                        <NavBar setView={setView} view={view} />
+                        <Store items={DATA.store} setView={setView} />
+                         <footer className="text-center py-12 text-slate-500 text-sm border-t border-slate-800 mt-10">
+                            <Socials items={DATA.social} />
+                            <p>{DATA.config.footerText}</p>
+                        </footer>
+                    </div>
+                );
+            }
+            
+            // Exclusive Blog View
+             if (view === 'blog') {
+                return (
+                    <div className="bg-slate-950 min-h-screen">
+                        <NavBar setView={setView} view={view} />
+                        <Blog posts={DATA.blog} setView={setView} isHome={false} />
+                         <footer className="text-center py-12 text-slate-500 text-sm border-t border-slate-800 mt-10">
+                            <Socials items={DATA.social} />
+                            <p>{DATA.config.footerText}</p>
+                        </footer>
+                    </div>
+                );
             }
 
             return (
                 <div className="pb-20 pt-20">
                     <NavBar setView={(v) => {
-                        setView(v);
-                        if (v !== 'store') {
-                            setTimeout(() => {
+                        if (v === 'store' || v === 'blog') {
+                             setView(v);
+                        } else {
+                             setView('home');
+                             setTimeout(() => {
                                 const el = document.getElementById(v);
                                 if (el) el.scrollIntoView({ behavior: 'smooth' });
                             }, 100);
@@ -401,7 +418,7 @@
                     <About data={DATA.about} />
                     <CustomSection data={DATA.custom} />
                     <Gallery items={DATA.gallery} />
-                    <Blog posts={DATA.blog} />
+                    <Blog posts={DATA.blog} setView={setView} isHome={true} />
 
                     <footer className="text-center py-12 text-slate-500 text-sm border-t border-slate-800 mt-10">
                         <Socials items={DATA.social} />
@@ -657,8 +674,8 @@
                 const currentSocial = content.social || [];
                 const newContent = { ...content, social: [...currentSocial, newItem.social] };
                 setContent(newContent);
-                setDebouncedHtml(null); setRevision(r => r + 1);
                 setNewItem(prev => ({ ...prev, social: { platform: '', link: '', icon: 'fab fa-twitter' } }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
                 alert("Social Link Added!");
             };
             const removeSocial = (index) => {

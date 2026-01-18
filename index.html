@@ -87,6 +87,8 @@
         const Icon = ({ name, size = 20, className }) => <i data-lucide={name} width={size} height={size} className={className}></i>;
 
         const NavBar = ({ setView, view }) => {
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
             const t = DATA.nav;
             const logoSrc = DATA.config.logoImage || "https://ui-avatars.com/api/?name=CD&background=6366f1&color=fff&size=128";
@@ -120,8 +122,25 @@
                                 </button>
                             ))}
                         </div>
-                        <div className="md:hidden text-slate-300"><Icon name="menu" /></div>
+                        <div className="md:hidden text-slate-300 cursor-pointer p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                            <Icon name={isMenuOpen ? "x" : "menu"} />
+                        </div>
                     </div>
+
+                    {/* Mobile Menu Dropdown */}
+                    {isMenuOpen && (
+                        <div className="md:hidden absolute top-20 left-0 w-full glass-card border-t border-white/10 p-4 flex flex-col gap-2 animate-fade-in shadow-2xl">
+                             {['home', 'portfolio', 'about', 'blog', 'gallery', 'store'].map(item => (
+                                <button 
+                                    key={item} 
+                                    onClick={() => { setView(item); setIsMenuOpen(false); }} 
+                                    className={\`text-left px-4 py-3 rounded-xl font-medium transition-all \${view === item ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}\`}
+                                >
+                                    {t[item] || item}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </nav>
             );
         };
@@ -238,7 +257,7 @@
                                     {post.images && post.images.length > 0 && (
                                         <div className={\`grid gap-4 mb-6 \${post.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}\`}>
                                             {post.images.map((img, idx) => (
-                                                <img key={idx} src={img} alt="Blog attachment" className="rounded-xl w-full h-48 object-cover border border-slate-700/50" />
+                                                <img key={idx} src={img} alt="Blog attachment" className="rounded-xl w-full h-auto border border-slate-700/50" />
                                             ))}
                                         </div>
                                     )}
@@ -812,7 +831,7 @@
                             {activeTab === 'global' && (
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-slate-300">Global</h3>
-                                    <div><label className="text-xs text-slate-500">Site Title</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.config.siteTitle} onChange={e => updateConfig('siteTitle', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Site Title</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.config.siteTitle} onChange={e => updateConfig('siteTitle', e.target.value)} /></div>
                                     <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
                                         <div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Logo Image</label>{content.config.logoImage && <button onClick={() => updateConfig('logoImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., logo.jpg" value={content.config.logoImage} onChange={e => updateConfig('logoImage', e.target.value)} />
@@ -821,17 +840,17 @@
                                         <div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Logo Video (MP4)</label>{content.config.logoVideo && <button onClick={() => updateConfig('logoVideo', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., logo.mp4" value={content.config.logoVideo} onChange={e => updateConfig('logoVideo', e.target.value)} />
                                     </div>
-                                    <div><label className="text-xs text-slate-500">Logo Text</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.config.logoText} onChange={e => updateConfig('logoText', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Logo Text</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.config.logoText} onChange={e => updateConfig('logoText', e.target.value)} /></div>
                                     <div><label className="text-xs text-slate-500">Colors</label><div className="flex gap-2"><input type="color" className="w-8 h-8 bg-transparent" value={globalData.primaryColor} onChange={e => setGlobalData({...globalData, primaryColor: e.target.value})} /><input type="color" className="w-8 h-8 bg-transparent" value={globalData.accentColor} onChange={e => setGlobalData({...globalData, accentColor: e.target.value})} /></div></div>
-                                    <div><label className="text-xs text-slate-500">Footer Text</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.config.footerText} onChange={e => updateConfig('footerText', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Footer Text</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.config.footerText} onChange={e => updateConfig('footerText', e.target.value)} /></div>
                                 </div>
                             )}
                             {activeTab === 'home' && (
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-slate-300">Home</h3>
-                                    <div><label className="text-xs text-slate-500">Badge</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.home.badge} onChange={e => updateContent('home', 'badge', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Headline</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-24" value={content.home.headline} onChange={e => updateContent('home', 'headline', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Description</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-24" value={content.home.desc} onChange={e => updateContent('home', 'desc', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Badge</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.home.badge} onChange={e => updateContent('home', 'badge', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Headline</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-24" value={content.home.headline} onChange={e => updateContent('home', 'headline', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Description</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-24" value={content.home.desc} onChange={e => updateContent('home', 'desc', e.target.value)} /></div>
                                 </div>
                             )}
                             {activeTab === 'about' && (
@@ -841,9 +860,9 @@
                                         <div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Profile Image</label>{content.about.profileImage && <button onClick={() => updateContent('about', 'profileImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., profile.jpg" value={content.about.profileImage} onChange={e => updateContent('about', 'profileImage', e.target.value)} />
                                     </div>
-                                    <div><label className="text-xs text-slate-500">Title</label><input className="w-full bg-slate-800 p-2 rounded text-sm" value={content.about.title} onChange={e => updateContent('about', 'title', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Bio</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-32" value={content.about.bio} onChange={e => updateContent('about', 'bio', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Thought</label><textarea className="w-full bg-slate-800 p-2 rounded text-sm h-20" value={content.about.thought} onChange={e => updateContent('about', 'thought', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Title</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.about.title} onChange={e => updateContent('about', 'title', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Bio</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-32" value={content.about.bio} onChange={e => updateContent('about', 'bio', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Thought</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-20" value={content.about.thought} onChange={e => updateContent('about', 'thought', e.target.value)} /></div>
                                 </div>
                             )}
                             {activeTab === 'data' && (
@@ -962,12 +981,10 @@
                                 <button onClick={() => setViewMode('preview')} className={`px-3 py-1 rounded text-sm ${viewMode === 'preview' ? 'bg-slate-700' : ''}`}>Preview</button>
                                 <button onClick={() => setViewMode('code')} className={`px-3 py-1 rounded text-sm ${viewMode === 'code' ? 'bg-slate-700' : ''}`}>Code</button>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={copyToClipboard} className="bg-green-600 px-3 py-1 rounded text-sm font-bold">{showCopySuccess ? 'Copied!' : 'Copy Code'}</button>
-                                <button onClick={downloadHtmlFile} className="bg-blue-600 px-3 py-1 rounded text-sm font-bold flex items-center gap-2">
-                                    <i className="fas fa-download"></i> Download .html
-                                </button>
-                            </div>
+                            <button onClick={copyToClipboard} className="bg-green-600 px-3 py-1 rounded text-sm font-bold">{showCopySuccess ? 'Copied!' : 'Copy Code'}</button>
+                            <button onClick={downloadHtmlFile} className="bg-blue-600 px-3 py-1 rounded text-sm font-bold flex items-center gap-2">
+                                <i className="fas fa-download"></i> Download .html
+                            </button>
                         </div>
                         <div className="flex-1 relative overflow-hidden">
                             {viewMode === 'preview' ? (

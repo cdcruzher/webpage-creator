@@ -31,11 +31,7 @@
 
         // --- GENERATOR HELPER ---
         const generateSiteCode = (globalData, content, isPreview = false) => {
-            const finalData = {
-                global: globalData,
-                en: content.en,
-                es: content.es
-            };
+            const finalData = { ...content, config: { ...content.config, ...globalData } };
             const safeData = JSON.stringify(finalData, null, 2);
             
             return `<!DOCTYPE html>
@@ -43,7 +39,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${content.en.config.siteTitle}</title>
+    <title>${finalData.config.siteTitle}</title>
     <script src="https://cdn.tailwindcss.com"><\/script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\/script>
@@ -96,14 +92,13 @@
         const IS_PREVIEW = ${isPreview};
         const Icon = ({ name, size = 20, className }) => <i data-lucide={name} width={size} height={size} className={className}></i>;
 
-        const NavBar = ({ setView, view, lang, toggleLang }) => {
+        const NavBar = ({ setView, view }) => {
             const [isMenuOpen, setIsMenuOpen] = useState(false);
-            const t = DATA[lang].nav;
-            const config = DATA[lang].config;
-            const logoSrc = config.logoImage || "https://ui-avatars.com/api/?name=CD&background=6366f1&color=fff&size=128";
-            const logoVideo = config.logoVideo;
 
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+            const t = DATA.nav;
+            const logoSrc = DATA.config.logoImage || "https://ui-avatars.com/api/?name=CD&background=6366f1&color=fff&size=128";
+            const logoVideo = DATA.config.logoVideo;
             
             return (
                 <nav className="fixed w-full z-50 glass-card border-b-0 border-white/5 top-0">
@@ -111,30 +106,45 @@
                         <div className="flex items-center gap-4 cursor-pointer" onClick={() => setView('home')}>
                             <div className="h-14 w-14 rounded-xl overflow-hidden border border-slate-600 relative bg-black">
                                 {logoVideo ? (
-                                    <video src={logoVideo} className="h-full w-full object-cover" autoPlay loop muted playsInline onEnded={(e) => e.target.play()} />
+                                    <video 
+                                        src={logoVideo} 
+                                        className="h-full w-full object-cover" 
+                                        autoPlay 
+                                        loop={true}
+                                        muted 
+                                        playsInline 
+                                        onEnded={(e) => e.target.play()}
+                                    />
                                 ) : (
                                     <img src={logoSrc} alt="Logo" className="h-full w-full object-cover" />
                                 )}
                             </div>
-                            <span className="font-bold text-xl tracking-tight text-white">{config.logoText}</span>
+                            <span className="font-bold text-xl tracking-tight text-white">{DATA.config.logoText}</span>
                         </div>
                         <div className="hidden md:flex items-center gap-2">
                             {['home', 'portfolio', 'about', 'blog', 'gallery', 'store'].map(item => (
-                                <button key={item} onClick={() => setView(item)} className={\`px-4 py-2 rounded-full text-sm font-medium transition-all \${view === item ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-400 hover:text-white hover:bg-white/5'}\`}>{t[item] || item}</button>
+                                <button key={item} onClick={() => setView(item)} className={\`px-4 py-2 rounded-full text-sm font-medium transition-all \${view === item ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-400 hover:text-white hover:bg-white/5'}\`}>
+                                    {t[item] || item}
+                                </button>
                             ))}
-                            <div className="ml-4 h-6 w-px bg-slate-700"></div>
-                            <button onClick={toggleLang} className="flex items-center gap-2 text-xs font-bold bg-slate-800 border border-slate-700 hover:border-purple-500/50 text-slate-300 px-3 py-1.5 rounded-full transition-all ml-2" title="Switch Language">
-                                <Icon name="globe" size={14} /> {lang.toUpperCase()}
-                            </button>
                         </div>
-                        <div className="md:hidden text-slate-300 cursor-pointer p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}><Icon name={isMenuOpen ? "x" : "menu"} /></div>
+                        <div className="md:hidden text-slate-300 cursor-pointer p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                            <Icon name={isMenuOpen ? "x" : "menu"} />
+                        </div>
                     </div>
+
+                    {/* Mobile Menu Dropdown */}
                     {isMenuOpen && (
                         <div className="md:hidden absolute top-20 left-0 w-full glass-card border-t border-white/10 p-4 flex flex-col gap-2 animate-fade-in shadow-2xl">
                              {['home', 'portfolio', 'about', 'blog', 'gallery', 'store'].map(item => (
-                                <button key={item} onClick={() => { setView(item); setIsMenuOpen(false); }} className={\`text-left px-4 py-3 rounded-xl font-medium transition-all \${view === item ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}\`}>{t[item] || item}</button>
+                                <button 
+                                    key={item} 
+                                    onClick={() => { setView(item); setIsMenuOpen(false); }} 
+                                    className={\`text-left px-4 py-3 rounded-xl font-medium transition-all \${view === item ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}\`}
+                                >
+                                    {t[item] || item}
+                                </button>
                             ))}
-                            <button onClick={() => { toggleLang(); setIsMenuOpen(false); }} className="text-left px-4 py-3 rounded-xl font-medium text-purple-400 hover:text-white hover:bg-white/5 flex items-center gap-2"><Icon name="globe" size={16} /> {lang === 'en' ? 'Español' : 'English'}</button>
                         </div>
                     )}
                 </nav>
@@ -144,11 +154,16 @@
         const Hero = ({ data, social, setView }) => (
             <section id="home" className="pt-24 pb-4 px-6 text-center animate-fade-in">
                 <div className="max-w-3xl mx-auto flex flex-col items-center">
+                    
+                    {/* Social Icons */}
                     <div className="flex gap-6 mb-8 animate-fade-in" style={{animationDelay: '0.1s'}}>
                         {social && social.map((item, i) => (
-                            <a key={i} href={item.link} target="_blank" className="text-slate-400 hover:text-white transition-all transform hover:scale-110"><i className={\`\${item.icon} text-2xl\`} /></a>
+                            <a key={i} href={item.link} target="_blank" className="text-slate-400 hover:text-white transition-all transform hover:scale-110">
+                                <i className={\`\${item.icon} text-2xl\`} />
+                            </a>
                         ))}
                     </div>
+
                     <div className="inline-block px-4 py-1.5 mb-6 text-xs font-mono text-purple-300 bg-purple-900/30 rounded-full border border-purple-500/30 backdrop-blur-sm">{data.badge}</div>
                     <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-8 leading-tight tracking-tight">{data.headline}</h1>
                     <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">{data.desc}</p>
@@ -165,7 +180,7 @@
                 <div className="max-w-6xl mx-auto">
                     <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white flex items-center gap-3"><span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">Projects</span></h2>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {items && items.map((project, i) => (
+                        {items.map((project, i) => (
                             <a key={i} href={project.link} target="_blank" className="glass-card rounded-3xl p-6 group cursor-pointer flex flex-col h-full relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i className={\`\${project.icon} text-6xl text-white\`} /></div>
                                 <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4 text-purple-400 group-hover:text-purple-300 group-hover:scale-110 transition-all duration-300"><i className={\`\${project.icon} text-xl\`} /></div>
@@ -184,20 +199,30 @@
                 <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12">
                     <div className="w-full md:w-1/2">
                         {data.profileImage ? (
-                            <div className="aspect-square glass-card rounded-full overflow-hidden border-4 border-slate-800 shadow-2xl relative group"><img src={data.profileImage} alt="Profile" className="w-full h-full object-cover" /><div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-blue-500/10 mix-blend-overlay"></div></div>
+                            <div className="aspect-square glass-card rounded-full overflow-hidden border-4 border-slate-800 shadow-2xl relative group">
+                                <img src={data.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-blue-500/10 mix-blend-overlay"></div>
+                            </div>
                         ) : (
-                            <div className="aspect-square glass-card rounded-full flex items-center justify-center text-slate-700 border-4 border-slate-800 shadow-2xl relative"><div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-blue-500/20 rounded-full animate-pulse"></div><Icon name="user" size={80} className="text-slate-500 relative z-10" /></div>
+                            <div className="aspect-square glass-card rounded-full flex items-center justify-center text-slate-700 border-4 border-slate-800 shadow-2xl relative">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-blue-500/20 rounded-full animate-pulse"></div>
+                                <Icon name="user" size={80} className="text-slate-500 relative z-10" />
+                            </div>
                         )}
                     </div>
                     <div className="w-full md:w-1/2">
                         <h2 className="text-4xl font-bold mb-6 text-white">{data.title}</h2>
                         <div className="text-slate-400 text-lg leading-relaxed mb-8 glass-card p-6 rounded-2xl border-l-4 border-purple-500">{data.bio}</div>
-                        <div className="flex items-start gap-4"><div className="p-3 bg-purple-500/20 rounded-full text-purple-400"><Icon name="quote" size={20} /></div><p className="italic text-slate-300 text-lg pt-2">"{data.thought}"</p></div>
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-purple-500/20 rounded-full text-purple-400"><Icon name="quote" size={20} /></div>
+                            <p className="italic text-slate-300 text-lg pt-2">"{data.thought}"</p>
+                        </div>
                     </div>
                 </div>
             </section>
         );
 
+        // --- CUSTOM EMBED SECTION ---
         const CustomSection = ({ data }) => {
             if (!data || !data.code) return null;
             return (
@@ -218,18 +243,25 @@
             const handleShare = (e, title, index) => {
                 e.preventDefault();
                 e.stopPropagation();
+                
                 try {
                     let baseUrl = window.location.href.split('?')[0];
-                    if (!baseUrl || baseUrl === 'about:srcdoc' || baseUrl.startsWith('blob:')) baseUrl = 'https://your-site.com';
+                    if (!baseUrl || baseUrl === 'about:srcdoc' || baseUrl.startsWith('blob:')) {
+                         baseUrl = 'https://your-site.com';
+                    }
                     const url = baseUrl + '?post=' + encodeURIComponent(title);
+                    
                     setCopiedIndex(index);
                     setTimeout(() => setCopiedIndex(null), 2000);
+
                     if (navigator.clipboard && window.isSecureContext) {
                         navigator.clipboard.writeText(url).catch(() => prompt("Copy this link to share:", url));
                     } else {
                         prompt("Copy this link to share:", url);
                     }
-                } catch (err) { console.error(err); }
+                } catch (err) {
+                    console.error(err);
+                }
             };
             
             return (
@@ -238,17 +270,30 @@
                         <div className="flex justify-between items-center mb-12">
                             <h2 className="text-3xl font-bold text-white">{isHome ? 'Latest Update' : 'Blog'}</h2>
                             {isHome ? (
-                                <button onClick={() => setView('blog')} className="text-slate-400 hover:text-white flex items-center gap-2 transition-colors">Read All <Icon name="arrow-right" size={16} /></button>
+                                <button onClick={() => setView('blog')} className="text-slate-400 hover:text-white flex items-center gap-2 transition-colors">
+                                    Read All <Icon name="arrow-right" size={16} />
+                                </button>
                             ) : (
-                                <button onClick={() => setView('home')} className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors border border-slate-600 text-slate-300 hover:text-white"><Icon name="home" size={18} /> Back to Home</button>
+                                <button onClick={() => setView('home')} className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors border border-slate-600 text-slate-300 hover:text-white">
+                                    <Icon name="home" size={18} /> Back to Home
+                                </button>
                             )}
                         </div>
                         <div className="space-y-6">
                             {displayPosts.map((post, i) => (
                                 <article key={i} id={\`post-\${i}\`} className="glass-card p-8 rounded-3xl hover:border-purple-500/30 transition-colors relative">
                                     <div className="flex justify-between items-start mb-4">
-                                        <div className="flex items-center gap-3 text-xs text-slate-400 font-mono"><span className="text-purple-400 bg-purple-500/10 px-2 py-1 rounded">{post.category}</span><span>•</span><span>{new Date(post.date).toLocaleDateString()}</span></div>
-                                        <button type="button" onClick={(e) => handleShare(e, post.title, i)} className="text-slate-500 hover:text-white transition-colors p-2 rounded hover:bg-white/5 z-10" title="Share link">{copiedIndex === i ? <span className="text-green-400 text-xs font-bold animate-fade-in">Copied!</span> : <Icon name="share-2" size={18} />}</button>
+                                        <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
+                                            <span className="text-purple-400 bg-purple-500/10 px-2 py-1 rounded">{post.category}</span><span>•</span><span>{new Date(post.date).toLocaleDateString()}</span>
+                                        </div>
+                                        <button 
+                                            type="button" 
+                                            onClick={(e) => handleShare(e, post.title, i)} 
+                                            className="text-slate-500 hover:text-white transition-colors p-2 rounded hover:bg-white/5 z-10" 
+                                            title="Copy link to clipboard"
+                                        >
+                                            {copiedIndex === i ? <span className="text-green-400 text-xs font-bold animate-fade-in">Copied!</span> : <Icon name="share-2" size={18} />}
+                                        </button>
                                     </div>
                                     <h3 className="text-2xl font-bold mb-4 text-slate-100">{post.title}</h3>
                                     {post.images && post.images.length > 0 && (
@@ -269,6 +314,7 @@
 
         const Gallery = ({ items }) => {
             const [selectedImg, setSelectedImg] = useState(null);
+
             return (
                 <section id="gallery" className="py-20 px-6">
                     <div className="max-w-6xl mx-auto text-center">
@@ -277,16 +323,33 @@
                             {items && items.map((item, i) => (
                                 <div key={i} onClick={() => setSelectedImg(item.url)} className="relative w-40 h-40 md:w-56 md:h-56 glass-card rounded-2xl overflow-hidden group cursor-pointer flex-shrink-0 transition-transform hover:scale-105">
                                     <img src={item.url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-80 group-hover:opacity-100" alt="Gallery" />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"><Icon name="zoom-in" className="text-white" size={32} /></div>
-                                    {IS_PREVIEW && <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-slate-300 text-[10px] font-mono py-1.5 text-center truncate px-2 border-t border-white/10">{item.url}</div>}
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                        <Icon name="zoom-in" className="text-white" size={32} />
+                                    </div>
+                                    {IS_PREVIEW && (
+                                        <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-slate-300 text-[10px] font-mono py-1.5 text-center truncate px-2 border-t border-white/10">
+                                            {item.url}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
                     </div>
+
                     {selectedImg && (
-                        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setSelectedImg(null)}>
-                            <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2"><Icon name="x" size={40} /></button>
-                            <img src={selectedImg} className="max-w-full max-h-[90vh] rounded-lg shadow-2xl" alt="Full size" onClick={(e) => e.stopPropagation()} />
+                        <div 
+                            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+                            onClick={() => setSelectedImg(null)}
+                        >
+                            <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2">
+                                <Icon name="x" size={40} />
+                            </button>
+                            <img 
+                                src={selectedImg} 
+                                className="max-w-full max-h-[90vh] rounded-lg shadow-2xl" 
+                                alt="Full size"
+                                onClick={(e) => e.stopPropagation()} 
+                            />
                         </div>
                     )}
                 </section>
@@ -298,19 +361,35 @@
                 <div className="max-w-6xl mx-auto">
                     <div className="flex justify-between items-center mb-12">
                         <h2 className="text-4xl font-bold text-white">Store</h2>
-                        <button onClick={() => setView('home')} className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors border border-slate-600 text-slate-300 hover:text-white"><Icon name="home" size={18} /> Back to Home</button>
+                        <button onClick={() => setView('home')} className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors border border-slate-600 text-slate-300 hover:text-white">
+                            <Icon name="home" size={18} /> Back to Home
+                        </button>
                     </div>
                     {items && items.length > 0 ? (
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {items.map((item, i) => (
                                 <div key={i} className="glass-card rounded-3xl overflow-hidden flex flex-col group">
-                                    <div className="relative h-64 overflow-hidden bg-slate-900/50"><img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" /><div className="absolute top-4 right-4 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full text-green-400 font-bold border border-green-500/20 shadow-lg">{item.price}</div></div>
-                                    <div className="p-6 flex flex-col flex-grow"><h3 className="text-2xl font-bold text-white mb-2">{item.title}</h3><p className="text-slate-400 text-sm mb-6 flex-grow leading-relaxed">{item.description}</p><a href={item.link} target="_blank" className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-center transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center gap-2 group-hover:translate-y-[-2px]">Buy Now <Icon name="shopping-bag" size={18} /></a></div>
+                                    <div className="relative h-64 overflow-hidden bg-slate-900/50">
+                                        <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                        <div className="absolute top-4 right-4 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full text-green-400 font-bold border border-green-500/20 shadow-lg">
+                                            {item.price}
+                                        </div>
+                                    </div>
+                                    <div className="p-6 flex flex-col flex-grow">
+                                        <h3 className="text-2xl font-bold text-white mb-2">{item.title}</h3>
+                                        <p className="text-slate-400 text-sm mb-6 flex-grow leading-relaxed">{item.description}</p>
+                                        <a href={item.link} target="_blank" className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-center transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center gap-2 group-hover:translate-y-[-2px]">
+                                            Buy Now <Icon name="shopping-bag" size={18} />
+                                        </a>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-20 text-slate-500"><Icon name="shopping-bag" size={48} className="mx-auto mb-4 opacity-50" /><p>No products available yet.</p></div>
+                        <div className="text-center py-20 text-slate-500">
+                            <Icon name="shopping-bag" size={48} className="mx-auto mb-4 opacity-50" />
+                            <p>No products available yet.</p>
+                        </div>
                     )}
                 </div>
             </section>
@@ -319,23 +398,23 @@
         const Socials = ({ items }) => (
             <div className="flex justify-center gap-6 mt-8 mb-6">
                 {items && items.map((item, i) => (
-                    <a key={i} href={item.link} target="_blank" className="w-12 h-12 rounded-full glass-card flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all transform hover:scale-110 hover:-translate-y-1"><i className={\`\${item.icon} text-xl\`}></i></a>
+                    <a key={i} href={item.link} target="_blank" className="w-12 h-12 rounded-full glass-card flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all transform hover:scale-110 hover:-translate-y-1">
+                        <i className={\`\${item.icon} text-xl\`}></i>
+                    </a>
                 ))}
             </div>
         );
 
         const App = () => {
             const [view, setView] = useState('home');
-            const [lang, setLang] = useState('en');
-
-            const toggleLang = () => { setLang(prev => prev === 'en' ? 'es' : 'en'); };
 
             useEffect(() => {
                 const handleMessage = (event) => {
                     if (event.data && event.data.type === 'SCROLL_TO') {
                         const id = event.data.id;
-                        if (id === 'global') window.scrollTo({ top: 0, behavior: 'smooth' });
-                        else {
+                        if (id === 'global') {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } else {
                             const el = document.getElementById(id);
                             if (el) el.scrollIntoView({ behavior: 'smooth' });
                             if (id === 'store') setView('store');
@@ -343,43 +422,83 @@
                         }
                     }
                 };
+                
                 const params = new URLSearchParams(window.location.search);
                 const postTitle = params.get('post');
                 if (postTitle) {
                     setView('blog');
                     setTimeout(() => {
-                        const postIndex = DATA.en.blog.findIndex(p => p.title === postTitle) || DATA.es.blog.findIndex(p => p.title === postTitle);
+                        const postIndex = DATA.blog.findIndex(p => p.title === postTitle);
                         if (postIndex !== -1) {
                             const el = document.getElementById(\`post-\${postIndex}\`);
                             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                     }, 500);
                 }
+
                 window.addEventListener('message', handleMessage);
                 return () => window.removeEventListener('message', handleMessage);
             }, []);
 
-            useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            });
 
-            const content = DATA[lang];
-            const global = DATA.global;
-
-            if (view === 'store') return <div className="bg-slate-950 min-h-screen"><NavBar setView={setView} view={view} lang={lang} toggleLang={toggleLang} /><Store items={content.store} setView={setView} /><footer className="text-center py-12 text-slate-500 text-sm border-t border-slate-800 mt-10"><Socials items={content.social} /><p>{content.config.footerText}</p></footer></div>;
-            if (view === 'blog') return <div className="bg-slate-950 min-h-screen"><NavBar setView={setView} view={view} lang={lang} toggleLang={toggleLang} /><Blog posts={content.blog} setView={setView} isHome={false} /><footer className="text-center py-12 text-slate-500 text-sm border-t border-slate-800 mt-10"><Socials items={content.social} /><p>{content.config.footerText}</p></footer></div>;
+            // Exclusive Views
+            if (view === 'store') {
+                return (
+                    <div className="bg-slate-950 min-h-screen">
+                        <NavBar setView={setView} view={view} />
+                        <Store items={DATA.store} setView={setView} />
+                         <footer className="text-center py-12 text-slate-500 text-sm border-t border-slate-800 mt-10">
+                            <Socials items={DATA.social} />
+                            <p>{DATA.config.footerText}</p>
+                        </footer>
+                    </div>
+                );
+            }
+             if (view === 'blog') {
+                return (
+                    <div className="bg-slate-950 min-h-screen">
+                        <NavBar setView={setView} view={view} />
+                        <Blog posts={DATA.blog} setView={setView} isHome={false} />
+                         <footer className="text-center py-12 text-slate-500 text-sm border-t border-slate-800 mt-10">
+                            <Socials items={DATA.social} />
+                            <p>{DATA.config.footerText}</p>
+                        </footer>
+                    </div>
+                );
+            }
 
             return (
                 <div className="pb-20 pt-20">
-                    <NavBar setView={(v) => { if (v === 'store' || v === 'blog') { setView(v); } else { setView('home'); setTimeout(() => { const el = document.getElementById(v); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); } }} view={view} lang={lang} toggleLang={toggleLang} />
-                    <Hero data={content.home} social={content.social} setView={(v) => document.getElementById(v).scrollIntoView({ behavior: 'smooth' })} />
-                    <Portfolio items={content.projects} />
-                    <About data={content.about} />
-                    <CustomSection data={content.custom} />
-                    <Gallery items={content.gallery} />
-                    <Blog posts={content.blog} setView={setView} isHome={true} />
-                    <footer className="text-center py-12 text-slate-500 text-sm border-t border-slate-800 mt-10"><Socials items={content.social} /><p>{content.config.footerText}</p></footer>
+                    <NavBar setView={(v) => {
+                        if (v === 'store' || v === 'blog') {
+                             setView(v);
+                        } else {
+                             setView('home');
+                             setTimeout(() => {
+                                const el = document.getElementById(v);
+                                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                            }, 100);
+                        }
+                    }} view={view} />
+                    
+                    <Hero data={DATA.home} social={DATA.social} setView={(v) => document.getElementById(v).scrollIntoView({ behavior: 'smooth' })} />
+                    <Portfolio items={DATA.projects} />
+                    <About data={DATA.about} />
+                    <CustomSection data={DATA.custom} />
+                    <Gallery items={DATA.gallery} />
+                    <Blog posts={DATA.blog} setView={setView} isHome={true} />
+
+                    <footer className="text-center py-12 text-slate-500 text-sm border-t border-slate-800 mt-10">
+                        <Socials items={DATA.social} />
+                        <p>{DATA.config.footerText}</p>
+                    </footer>
                 </div>
             );
         };
+
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     <\/script>
@@ -401,51 +520,51 @@
                 { title: 'Hello World', content: 'Welcome to my new portfolio.', date: '2025-01-01', category: 'Update', images: [] }
             ],
             gallery: [],
-            store: [],
+            store: [], 
             social: [
                 { platform: 'Twitter', link: '#', icon: 'fab fa-twitter' },
                 { platform: 'GitHub', link: '#', icon: 'fab fa-github' }
             ]
         };
-        
-        const defaultContentEs = JSON.parse(JSON.stringify(defaultContent));
-        defaultContentEs.config.footerText = '© 2025 Todos los derechos reservados.';
-        defaultContentEs.nav = { home: 'Inicio', portfolio: 'Apps', about: 'Sobre Mí', blog: 'Blog', gallery: 'Galería', store: 'Tienda' };
-        defaultContentEs.home = { badge: 'Desarrollador Creativo', headline: 'Creando Experiencias Digitales', desc: 'Explorando código, música y ciencia.' };
-        defaultContentEs.about.title = 'Sobre Mí';
 
         function CMSApp() {
             const [globalData, setGlobalData] = useState({ primaryColor: '#8b5cf6', accentColor: '#06b6d4' });
-            const [content, setContent] = useState({ en: defaultContent, es: defaultContentEs });
-            const [editLang, setEditLang] = useState('en'); 
+            const [content, setContent] = useState(defaultContent);
             const [debouncedHtml, setDebouncedHtml] = useState('');
             const [revision, setRevision] = useState(0); 
             const [showPasteInput, setShowPasteInput] = useState(false);
             const [pasteContent, setPasteContent] = useState('');
+            
             const [activeTab, setActiveTab] = useState('global'); 
             const [viewMode, setViewMode] = useState('preview');
             const [showCopySuccess, setShowCopySuccess] = useState(false);
             const fileInputRef = useRef(null);
             const iframeRef = useRef(null);
 
-            // New Item State
-             const [newItem, setNewItem] = useState({
+            const [newItem, setNewItem] = useState({
                 project: { title: '', desc: '', link: '', icon: 'fas fa-code' },
                 blog: { title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'Update', images: '' },
                 photo: { url: '', link: '' },
                 social: { platform: '', link: '', icon: 'fab fa-twitter' },
                 store: { title: '', price: '', image: '', link: '', description: '' } 
             });
+
+            // Edit Modes
             const [editingProjectIndex, setEditingProjectIndex] = useState(null);
             const [editingBlogIndex, setEditingBlogIndex] = useState(null);
             const [editingPhotoIndex, setEditingPhotoIndex] = useState(null);
-            const [editingStoreIndex, setEditingStoreIndex] = useState(null);
+            const [editingStoreIndex, setEditingStoreIndex] = useState(null); 
 
+            // --- IMPORT FUNCTION ---
             const handleFileUpload = (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
+
                 const reader = new FileReader();
-                reader.onload = (e) => { processImportedHtml(e.target.result); };
+                reader.onload = (e) => {
+                    const html = e.target.result;
+                    processImportedHtml(html);
+                };
                 reader.readAsText(file);
             };
 
@@ -459,128 +578,295 @@
             const processImportedHtml = (html) => {
                 const regex = /const DATA = ({[\s\S]*?});/;
                 const match = html.match(regex);
+                
                 if (match && match[1]) {
                     try {
                         const importedData = JSON.parse(match[1]);
-                        if (importedData.global) setGlobalData(importedData.global);
-                        
-                        // DEEP MERGE with default to ensure no missing keys
-                        let newContent = { ...content };
-                        
-                        if (importedData.en && importedData.es) {
-                            // New Structure
-                            newContent.en = { ...defaultContent, ...importedData.en };
-                            newContent.es = { ...defaultContentEs, ...importedData.es };
-                            // Ensure arrays exist
-                            ['blog', 'store', 'gallery', 'social', 'projects'].forEach(key => {
-                                if(!newContent.en[key]) newContent.en[key] = [];
-                                if(!newContent.es[key]) newContent.es[key] = [];
+                        if (importedData.config && importedData.config.primaryColor) {
+                            setGlobalData({
+                                primaryColor: importedData.config.primaryColor,
+                                accentColor: importedData.config.accentColor || '#06b6d4'
                             });
-                        } else {
-                            // Old Structure: Map to EN and Clone to ES
-                            // Fill missing arrays in importedData first
-                             ['blog', 'store', 'gallery', 'social', 'projects'].forEach(key => {
-                                if(!importedData[key]) importedData[key] = [];
-                            });
-                            // Merge
-                            const enMerged = { ...defaultContent, ...importedData };
-                            const esMerged = JSON.parse(JSON.stringify(enMerged));
-                            newContent = { en: enMerged, es: esMerged };
                         }
                         
-                        setContent(newContent);
+                        // Handle structure
+                        if (importedData.en && importedData.es) {
+                            // If user uploads bilingual file, just take EN
+                            setContent(importedData.en);
+                        } else {
+                            // Assume flat structure
+                            if (!importedData.social) importedData.social = [];
+                            if (!importedData.store) importedData.store = [];
+                            if (!importedData.config.logoVideo) importedData.config.logoVideo = '';
+                            if (!importedData.custom) importedData.custom = { title: '', code: '' };
+                            setContent(importedData);
+                        }
+                        
+                        // Force update
+                        const code = generateSiteCode({
+                            primaryColor: importedData.config?.primaryColor || '#8b5cf6',
+                            accentColor: importedData.config?.accentColor || '#06b6d4'
+                        }, importedData.en ? importedData.en : importedData, true);
+                        
+                        setDebouncedHtml(code);
                         setRevision(r => r + 1); 
                         alert("Site Imported Successfully!");
-                    } catch (err) { alert("Error parsing the code."); }
-                } else { alert("Could not find configuration data."); }
+                    } catch (err) {
+                        alert("Error parsing the code.");
+                    }
+                } else {
+                    alert("Could not find configuration data in this code.");
+                }
             };
-            
-            // Re-pasting helper functions and render to be complete context
-            const currentLangData = content[editLang];
-            
-             const updateContent = (section, field, value) => {
-                setContent(prev => ({ ...prev, [editLang]: { ...prev[editLang], [section]: { ...prev[editLang][section], [field]: value } } }));
-                setRevision(r => r + 1);
+
+            // --- DOWNLOAD FUNCTION ---
+            const downloadHtmlFile = () => {
+                const htmlContent = debouncedHtml || generateSiteCode(globalData, content, false);
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'index.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
             };
-            const updateConfig = (field, value) => {
-                setContent(prev => ({ ...prev, [editLang]: { ...prev[editLang], config: { ...prev[editLang].config, [field]: value } } }));
-                setRevision(r => r + 1);
-            };
-            
-            // ... (Add/Edit/Delete functions: Projects, Blog, Photo, Social, Store - SAME AS BEFORE)
-            // For brevity, assuming they are here as in the previous working version.
-            const addProject = () => { if(!newItem.project.title) return; setContent(prev => ({ en: { ...prev.en, projects: [newItem.project, ...prev.en.projects] }, es: { ...prev.es, projects: [newItem.project, ...prev.es.projects] } })); setNewItem(prev => ({ ...prev, project: { title: '', desc: '', link: '', icon: 'fas fa-code' } })); setDebouncedHtml(null); setRevision(r => r + 1); alert("Project added!"); };
-            const editProject = (index) => { setNewItem(prev => ({ ...prev, project: content[editLang].projects[index] })); setEditingProjectIndex(index); };
-            const handleProjectUpdate = () => { setContent(prev => { const updatedList = [...prev[editLang].projects]; updatedList[editingProjectIndex] = newItem.project; return { ...prev, [editLang]: { ...prev[editLang], projects: updatedList } }; }); setEditingProjectIndex(null); setNewItem(prev => ({ ...prev, project: { title: '', desc: '', link: '', icon: 'fas fa-code' } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-            const removeProject = (index) => { if(!confirm("Delete?")) return; setContent(prev => ({ en: { ...prev.en, projects: prev.en.projects.filter((_, i) => i !== index) }, es: { ...prev.es, projects: prev.es.projects.filter((_, i) => i !== index) } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-            const cancelEditProject = () => { setNewItem(prev => ({ ...prev, project: { title: '', desc: '', link: '', icon: 'fas fa-code' } })); setEditingProjectIndex(null); };
 
-            const addBlog = () => { if(!newItem.blog.title) return; const imageList = newItem.blog.images ? newItem.blog.images.split('\n').map(l => l.trim()).filter(l => l.length > 0) : []; const blogData = { ...newItem.blog, images: imageList }; setContent(prev => ({ en: { ...prev.en, blog: [blogData, ...prev.en.blog] }, es: { ...prev.es, blog: [blogData, ...prev.es.blog] } })); setNewItem(prev => ({ ...prev, blog: { title: '', content: '', date: '', category: 'Update', images: '' } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-            const editBlog = (index) => { const post = content[editLang].blog[index]; const imageString = post.images ? post.images.join('\n') : ''; setNewItem(prev => ({ ...prev, blog: { ...post, images: imageString } })); setEditingBlogIndex(index); };
-            const handleBlogUpdate = () => { const imageList = newItem.blog.images ? newItem.blog.images.split('\n').map(l => l.trim()).filter(l => l.length > 0) : []; const blogData = { ...newItem.blog, images: imageList }; setContent(prev => { const updatedList = [...prev[editLang].blog]; updatedList[editingBlogIndex] = blogData; return { ...prev, [editLang]: { ...prev[editLang], blog: updatedList } }; }); setEditingBlogIndex(null); setNewItem(prev => ({ ...prev, blog: { title: '', content: '', date: '', category: 'Update', images: '' } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-            const removeBlog = (index) => { if(!confirm("Delete?")) return; setContent(prev => ({ en: { ...prev.en, blog: prev.en.blog.filter((_, i) => i !== index) }, es: { ...prev.es, blog: prev.es.blog.filter((_, i) => i !== index) } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-            const cancelEditBlog = () => { setNewItem(prev => ({ ...prev, blog: { title: '', content: '', date: '', category: 'Update', images: '' } })); setEditingBlogIndex(null); };
-
-            const addPhoto = () => { if(!newItem.photo.url) return; setContent(prev => ({ en: { ...prev.en, gallery: [newItem.photo, ...prev.en.gallery] }, es: { ...prev.es, gallery: [newItem.photo, ...prev.es.gallery] } })); setNewItem(prev => ({ ...prev, photo: { url: '', link: '' } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-            const editPhoto = (index) => { setNewItem(prev => ({ ...prev, photo: content[editLang].gallery[index] })); setEditingPhotoIndex(index); };
-            const handlePhotoSubmit = () => { if(!newItem.photo.url) return; if (editingPhotoIndex !== null) { setContent(prev => { const updated = [...prev[editLang].gallery]; updated[editingPhotoIndex] = newItem.photo; return { ...prev, [editLang]: { ...prev[editLang], gallery: updated } }; }); setEditingPhotoIndex(null); } else { addPhoto(); return; } setNewItem(prev => ({ ...prev, photo: { url: '', link: '' } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-            const removePhoto = (index) => { if(!confirm("Delete?")) return; setContent(prev => ({ en: { ...prev.en, gallery: prev.en.gallery.filter((_, i) => i !== index) }, es: { ...prev.es, gallery: prev.es.gallery.filter((_, i) => i !== index) } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-            const cancelEditPhoto = () => { setNewItem(prev => ({ ...prev, photo: { url: '', link: '' } })); setEditingPhotoIndex(null); };
-
-            const addSocial = () => { if(!newItem.social.platform) return; setContent(prev => ({ en: { ...prev.en, social: [...(prev.en.social||[]), newItem.social] }, es: { ...prev.es, social: [...(prev.es.social||[]), newItem.social] } })); setNewItem(prev => ({ ...prev, social: { platform: '', link: '', icon: 'fab fa-twitter' } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-            const removeSocial = (index) => { if(!confirm("Delete?")) return; setContent(prev => ({ en: { ...prev.en, social: prev.en.social.filter((_, i) => i !== index) }, es: { ...prev.es, social: prev.es.social.filter((_, i) => i !== index) } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-
-            const addStore = () => { if(!newItem.store.title) return; setContent(prev => ({ en: { ...prev.en, store: [newItem.store, ...prev.en.store] }, es: { ...prev.es, store: [newItem.store, ...prev.es.store] } })); setNewItem(prev => ({ ...prev, store: { title: '', price: '', image: '', link: '', description: '' } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-            const editStore = (index) => { setNewItem(prev => ({ ...prev, store: content[editLang].store[index] })); setEditingStoreIndex(index); };
-            const handleStoreSubmit = () => { if(!newItem.store.title) return; if(editingStoreIndex !== null) { setContent(prev => { const updatedList = [...prev[editLang].store]; updatedList[editingStoreIndex] = newItem.store; return { ...prev, [editLang]: { ...prev[editLang], store: updatedList } }; }); setEditingStoreIndex(null); } else { addStore(); return; } setNewItem(prev => ({ ...prev, store: { title: '', price: '', image: '', link: '', description: '' } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-            const removeStore = (index) => { if(!confirm("Delete?")) return; setContent(prev => ({ en: { ...prev.en, store: prev.en.store.filter((_, i) => i !== index) }, es: { ...prev.es, store: prev.es.store.filter((_, i) => i !== index) } })); setDebouncedHtml(null); setRevision(r => r + 1); };
-            const cancelEditStore = () => { setNewItem(prev => ({ ...prev, store: { title: '', price: '', image: '', link: '', description: '' } })); setEditingStoreIndex(null); };
-
+            // --- DEBOUNCER FOR PREVIEW ---
             useEffect(() => {
-                const handler = setTimeout(() => { setDebouncedHtml(generateSiteCode(globalData, content, true)); }, 1000); 
+                const handler = setTimeout(() => {
+                    setDebouncedHtml(generateSiteCode(globalData, content, true));
+                }, 1000); 
                 return () => clearTimeout(handler);
             }, [globalData, content]);
 
+            // --- SCROLL SYNC ---
             useEffect(() => {
                 if (viewMode === 'preview' && iframeRef.current) {
-                    const sendScroll = () => { iframeRef.current.contentWindow?.postMessage({ type: 'SCROLL_TO', id: activeTab }, '*'); };
-                    sendScroll(); setTimeout(sendScroll, 800);
+                    const sendScroll = () => {
+                        iframeRef.current.contentWindow?.postMessage({ type: 'SCROLL_TO', id: activeTab }, '*');
+                    };
+                    sendScroll();
+                    setTimeout(sendScroll, 800);
                 }
             }, [activeTab, viewMode, debouncedHtml]);
 
             const currentHtml = generateSiteCode(globalData, content, false);
 
-            const downloadHtmlFile = () => {
-                const blob = new Blob([currentHtml], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = 'index.html'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            // --- ACTIONS ---
+            const updateContent = (section, field, value) => {
+                setContent(prev => ({...prev, [section]: { ...prev[section], [field]: value } }));
+                setRevision(r => r + 1);
             };
-             const copyToClipboard = () => {
-                const textArea = document.createElement("textarea"); textArea.value = currentHtml; document.body.appendChild(textArea); textArea.select(); try { document.execCommand('copy'); setShowCopySuccess(true); setTimeout(() => setShowCopySuccess(false), 2000); } catch (err) {} document.body.removeChild(textArea);
+            const updateConfig = (field, value) => {
+                setContent(prev => ({...prev, config: { ...prev.config, [field]: value } }));
+                setRevision(r => r + 1);
+            };
+
+            // Projects
+            const handleProjectSubmit = () => {
+                if(!newItem.project.title) return;
+                if (editingProjectIndex !== null) {
+                    setContent(prev => {
+                        const updated = [...prev.projects];
+                        updated[editingProjectIndex] = newItem.project;
+                        return { ...prev, projects: updated };
+                    });
+                    setEditingProjectIndex(null);
+                    alert("Project Updated!");
+                } else {
+                    setContent(prev => ({ ...prev, projects: [newItem.project, ...prev.projects] }));
+                    alert("Project Added!");
+                }
+                setNewItem(prev => ({ ...prev, project: { title: '', desc: '', link: '', icon: 'fas fa-code' } }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+            const editProject = (index) => {
+                setNewItem(prev => ({ ...prev, project: content.projects[index] }));
+                setEditingProjectIndex(index);
+            };
+            const removeProject = (index) => {
+                if(!confirm("Delete this project?")) return;
+                setContent(prev => ({ ...prev, projects: prev.projects.filter((_, i) => i !== index) }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+            const cancelEditProject = () => {
+                setNewItem(prev => ({ ...prev, project: { title: '', desc: '', link: '', icon: 'fas fa-code' } }));
+                setEditingProjectIndex(null);
+            }
+
+            // Blogs
+            const handleBlogSubmit = () => {
+                if(!newItem.blog.title) return;
+                const imageList = newItem.blog.images ? newItem.blog.images.split('\n').map(l => l.trim()).filter(l => l.length > 0) : [];
+                const blogData = { ...newItem.blog, images: imageList };
+
+                if (editingBlogIndex !== null) {
+                    setContent(prev => {
+                        const updated = [...prev.blog];
+                        updated[editingBlogIndex] = blogData;
+                        return { ...prev, blog: updated };
+                    });
+                    setEditingBlogIndex(null);
+                    alert("Blog Updated!");
+                } else {
+                    setContent(prev => ({ ...prev, blog: [blogData, ...prev.blog] }));
+                    alert("Blog Published!");
+                }
+                setNewItem(prev => ({ ...prev, blog: { title: '', content: '', date: '', category: 'Update', images: '' } }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+            const editBlog = (index) => {
+                const post = content.blog[index];
+                const imageString = post.images ? post.images.join('\n') : '';
+                setNewItem(prev => ({ ...prev, blog: { ...post, images: imageString } }));
+                setEditingBlogIndex(index);
+            };
+            const removeBlog = (index) => {
+                if(!confirm("Delete this post?")) return;
+                setContent(prev => ({ ...prev, blog: prev.blog.filter((_, i) => i !== index) }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+             const cancelEditBlog = () => {
+                setNewItem(prev => ({ ...prev, blog: { title: '', content: '', date: '', category: 'Update', images: '' } }));
+                setEditingBlogIndex(null);
+            }
+
+            // Photos
+            const handlePhotoSubmit = () => {
+                if(!newItem.photo.url) return;
+                 if (editingPhotoIndex !== null) {
+                    setContent(prev => {
+                        const updated = [...prev.gallery];
+                        updated[editingPhotoIndex] = newItem.photo;
+                        return { ...prev, gallery: updated };
+                    });
+                    setEditingPhotoIndex(null);
+                    alert("Photo Updated!");
+                } else {
+                    setContent(prev => ({ ...prev, gallery: [newItem.photo, ...prev.gallery] }));
+                    alert("Photo Added!");
+                }
+                setNewItem(prev => ({ ...prev, photo: { url: '', link: '' } }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+             const editPhoto = (index) => {
+                setNewItem(prev => ({ ...prev, photo: content.gallery[index] }));
+                setEditingPhotoIndex(index);
+            };
+            const removePhoto = (index) => {
+                if(!confirm("Delete this photo?")) return;
+                setContent(prev => ({ ...prev, gallery: prev.gallery.filter((_, i) => i !== index) }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+             const cancelEditPhoto = () => {
+                setNewItem(prev => ({ ...prev, photo: { url: '', link: '' } }));
+                setEditingPhotoIndex(null);
+            }
+
+            // Socials
+            const addSocial = () => {
+                if(!newItem.social.platform) return;
+                const currentSocial = content.social || [];
+                const newContent = { ...content, social: [...currentSocial, newItem.social] };
+                setContent(newContent);
+                setNewItem(prev => ({ ...prev, social: { platform: '', link: '', icon: 'fab fa-twitter' } }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
+                alert("Social Link Added!");
+            };
+            const removeSocial = (index) => {
+                if(!confirm("Delete this link?")) return;
+                const newContent = { ...content, social: content.social.filter((_, i) => i !== index) };
+                setContent(newContent);
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+
+            // Store
+            const handleStoreSubmit = () => {
+                if(!newItem.store.title) return;
+                if (editingStoreIndex !== null) {
+                    setContent(prev => {
+                        const updated = [...prev.store];
+                        updated[editingStoreIndex] = newItem.store;
+                        return { ...prev, store: updated };
+                    });
+                    setEditingStoreIndex(null);
+                    alert("Product Updated!");
+                } else {
+                    const currentStore = content.store || [];
+                    setContent(prev => ({ ...prev, store: [newItem.store, ...currentStore] }));
+                    alert("Product Added!");
+                }
+                setNewItem(prev => ({ ...prev, store: { title: '', price: '', image: '', link: '', description: '' } }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+             const editStore = (index) => {
+                setNewItem(prev => ({ ...prev, store: content.store[index] }));
+                setEditingStoreIndex(index);
+            };
+            const removeStore = (index) => {
+                if(!confirm("Delete this product?")) return;
+                setContent(prev => ({ ...prev, store: prev.store.filter((_, i) => i !== index) }));
+                setDebouncedHtml(null); setRevision(r => r + 1);
+            };
+             const cancelEditStore = () => {
+                setNewItem(prev => ({ ...prev, store: { title: '', price: '', image: '', link: '', description: '' } }));
+                setEditingStoreIndex(null);
+            }
+
+            const copyToClipboard = () => {
+                const textArea = document.createElement("textarea");
+                textArea.value = currentHtml;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try { document.execCommand('copy'); setShowCopySuccess(true); setTimeout(() => setShowCopySuccess(false), 2000); } catch (err) {}
+                document.body.removeChild(textArea);
             };
 
             return (
                 <div className="flex h-screen bg-slate-900 text-white font-sans overflow-hidden">
                     <div className="w-80 bg-slate-950 border-r border-slate-800 flex flex-col shadow-xl z-20">
-                         {/* ... Sidebar Content (same as previous) ... */}
-                         <div className="p-4 border-b border-slate-800">
+                        <div className="p-4 border-b border-slate-800">
                             <h1 className="text-xl font-bold flex items-center gap-2 mb-4"><i className="fas fa-terminal text-brand-purple"></i> Site Manager</h1>
-                            <div className="flex bg-slate-900 rounded-lg p-1 mb-4 border border-slate-700">
-                                <button onClick={() => setEditLang('en')} className={`flex-1 py-1 text-xs font-bold rounded ${editLang === 'en' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-white'}`}>English</button>
-                                <button onClick={() => setEditLang('es')} className={`flex-1 py-1 text-xs font-bold rounded ${editLang === 'es' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-white'}`}>Español</button>
-                            </div>
+                            
                             {!showPasteInput ? (
                                 <div className="space-y-2 mb-2">
-                                    <button onClick={() => fileInputRef.current.click()} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded text-xs font-bold border border-slate-700 flex items-center justify-center gap-2"><i className="fas fa-file-upload"></i> Load Existing Site</button>
-                                    <button onClick={() => setShowPasteInput(true)} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded text-xs font-bold border border-slate-700 flex items-center justify-center gap-2"><i className="fas fa-clipboard"></i> Paste Code</button>
+                                    <button 
+                                        onClick={() => fileInputRef.current.click()} 
+                                        className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded text-xs font-bold border border-slate-700 flex items-center justify-center gap-2"
+                                    >
+                                        <i className="fas fa-file-upload"></i> Load Existing Site
+                                    </button>
+                                    <button 
+                                        onClick={() => setShowPasteInput(true)} 
+                                        className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded text-xs font-bold border border-slate-700 flex items-center justify-center gap-2"
+                                    >
+                                        <i className="fas fa-clipboard"></i> Paste Code
+                                    </button>
                                 </div>
                             ) : (
                                 <div className="space-y-2 mb-2 p-2 bg-slate-900 rounded border border-slate-700 animate-fade-in">
-                                    <textarea className="w-full h-24 bg-black text-xs text-green-400 p-2 font-mono rounded" placeholder="Paste index.html code here..." value={pasteContent} onChange={(e) => setPasteContent(e.target.value)}></textarea>
-                                    <div className="flex gap-2"><button onClick={handlePasteImport} className="flex-1 bg-green-600 text-white text-xs font-bold py-1 rounded hover:bg-green-500">Import</button><button onClick={() => setShowPasteInput(false)} className="flex-1 bg-slate-700 text-slate-300 text-xs font-bold py-1 rounded hover:bg-slate-600">Cancel</button></div>
+                                    <textarea 
+                                        className="w-full h-24 bg-black text-xs text-green-400 p-2 font-mono rounded"
+                                        placeholder="Paste index.html code here..."
+                                        value={pasteContent}
+                                        onChange={(e) => setPasteContent(e.target.value)}
+                                    ></textarea>
+                                    <div className="flex gap-2">
+                                        <button onClick={handlePasteImport} className="flex-1 bg-green-600 text-white text-xs font-bold py-1 rounded hover:bg-green-500">Import</button>
+                                        <button onClick={() => setShowPasteInput(false)} className="flex-1 bg-slate-700 text-slate-300 text-xs font-bold py-1 rounded hover:bg-slate-600">Cancel</button>
+                                    </div>
                                 </div>
                             )}
-                            <input type="file" ref={fileInputRef} className="hidden" accept=".html" onChange={handleFileUpload} />
+
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                className="hidden" 
+                                accept=".html" 
+                                onChange={handleFileUpload} 
+                            />
                         </div>
                         <div className="flex border-b border-slate-800 overflow-x-auto">
                             {['global', 'home', 'about', 'data', 'social', 'store', 'embed'].map(tab => (
@@ -588,61 +874,68 @@
                             ))}
                         </div>
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                            {/* ... Content Forms (same as previous, relying on currentLangData) ... */}
-                            {/* Shortened for brevity, use previous blocks */}
-                             {activeTab === 'global' && (
+                            {activeTab === 'global' && (
                                 <div className="space-y-4">
-                                    <h3 className="font-bold text-slate-300">Global ({editLang.toUpperCase()})</h3>
-                                    <div><label className="text-xs text-slate-500">Site Title</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={currentLangData.config.siteTitle} onChange={e => updateConfig('siteTitle', e.target.value)} /></div>
-                                    <div className="bg-slate-800 p-3 rounded-lg border border-slate-700"><div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Logo Image</label>{content[editLang].config.logoImage && <button onClick={() => updateConfig('logoImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div><input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., logo.jpg" value={content[editLang].config.logoImage} onChange={e => updateConfig('logoImage', e.target.value)} /></div>
-                                    <div className="bg-slate-800 p-3 rounded-lg border border-slate-700"><div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Logo Video (MP4)</label>{content[editLang].config.logoVideo && <button onClick={() => updateConfig('logoVideo', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div><input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., logo.mp4" value={content[editLang].config.logoVideo} onChange={e => updateConfig('logoVideo', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Logo Text</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={currentLangData.config.logoText} onChange={e => updateConfig('logoText', e.target.value)} /></div>
+                                    <h3 className="font-bold text-slate-300">Global</h3>
+                                    <div><label className="text-xs text-slate-500">Site Title</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.config.siteTitle} onChange={e => updateConfig('siteTitle', e.target.value)} /></div>
+                                    <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                        <div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Logo Image</label>{content.config.logoImage && <button onClick={() => updateConfig('logoImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., logo.jpg" value={content.config.logoImage} onChange={e => updateConfig('logoImage', e.target.value)} />
+                                    </div>
+                                    <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                        <div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Logo Video (MP4)</label>{content.config.logoVideo && <button onClick={() => updateConfig('logoVideo', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., logo.mp4" value={content.config.logoVideo} onChange={e => updateConfig('logoVideo', e.target.value)} />
+                                    </div>
+                                    <div><label className="text-xs text-slate-500">Logo Text</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.config.logoText} onChange={e => updateConfig('logoText', e.target.value)} /></div>
                                     <div><label className="text-xs text-slate-500">Colors</label><div className="flex gap-2"><input type="color" className="w-8 h-8 bg-transparent" value={globalData.primaryColor} onChange={e => setGlobalData({...globalData, primaryColor: e.target.value})} /><input type="color" className="w-8 h-8 bg-transparent" value={globalData.accentColor} onChange={e => setGlobalData({...globalData, accentColor: e.target.value})} /></div></div>
-                                    <div><label className="text-xs text-slate-500">Footer Text</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={currentLangData.config.footerText} onChange={e => updateConfig('footerText', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Footer Text</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.config.footerText} onChange={e => updateConfig('footerText', e.target.value)} /></div>
                                 </div>
                             )}
-                             {activeTab === 'home' && (
+                            {activeTab === 'home' && (
                                 <div className="space-y-4">
-                                    <h3 className="font-bold text-slate-300">Home ({editLang.toUpperCase()})</h3>
-                                    <div><label className="text-xs text-slate-500">Badge</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={currentLangData.home.badge} onChange={e => updateContent('home', 'badge', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Headline</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-24" value={currentLangData.home.headline} onChange={e => updateContent('home', 'headline', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Description</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-24" value={currentLangData.home.desc} onChange={e => updateContent('home', 'desc', e.target.value)} /></div>
+                                    <h3 className="font-bold text-slate-300">Home</h3>
+                                    <div><label className="text-xs text-slate-500">Badge</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.home.badge} onChange={e => updateContent('home', 'badge', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Headline</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-24" value={content.home.headline} onChange={e => updateContent('home', 'headline', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Description</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-24" value={content.home.desc} onChange={e => updateContent('home', 'desc', e.target.value)} /></div>
                                 </div>
                             )}
-                             {activeTab === 'about' && (
+                            {activeTab === 'about' && (
                                 <div className="space-y-4">
-                                    <h3 className="font-bold text-slate-300">About ({editLang.toUpperCase()})</h3>
-                                    <div className="bg-slate-800 p-3 rounded-lg border border-slate-700"><div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Profile Image</label>{currentLangData.about.profileImage && <button onClick={() => updateContent('about', 'profileImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div><input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., profile.jpg" value={currentLangData.about.profileImage} onChange={e => updateContent('about', 'profileImage', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Title</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={currentLangData.about.title} onChange={e => updateContent('about', 'title', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Bio</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-32" value={currentLangData.about.bio} onChange={e => updateContent('about', 'bio', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">Thought</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-20" value={currentLangData.about.thought} onChange={e => updateContent('about', 'thought', e.target.value)} /></div>
+                                    <h3 className="font-bold text-slate-300">About</h3>
+                                    <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                        <div className="flex justify-between items-center mb-1"><label className="text-xs text-brand-purple font-bold">Profile Image</label>{content.about.profileImage && <button onClick={() => updateContent('about', 'profileImage', '')} className="text-xs text-red-400 hover:text-red-300">Clear</button>}</div>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-sm font-mono text-slate-300" placeholder="e.g., profile.jpg" value={content.about.profileImage} onChange={e => updateContent('about', 'profileImage', e.target.value)} />
+                                    </div>
+                                    <div><label className="text-xs text-slate-500">Title</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.about.title} onChange={e => updateContent('about', 'title', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Bio</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-32" value={content.about.bio} onChange={e => updateContent('about', 'bio', e.target.value)} /></div>
+                                    <div><label className="text-xs text-slate-500">Thought</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-20" value={content.about.thought} onChange={e => updateContent('about', 'thought', e.target.value)} /></div>
                                 </div>
                             )}
-                             {activeTab === 'data' && (
+                            {activeTab === 'data' && (
                                 <div className="space-y-6">
-                                     <div className="p-3 bg-slate-800 rounded-lg">
+                                    <div className="p-3 bg-slate-800 rounded-lg">
                                         <div className="flex justify-between items-center mb-2"><h4 className="text-sm font-bold text-blue-400">{editingProjectIndex !== null ? 'Edit Project' : 'Add Project'}</h4>{editingProjectIndex !== null && <button onClick={cancelEditProject} className="text-xs text-slate-500 hover:text-white">Cancel</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Title" value={newItem.project.title} onChange={e => setNewItem({...newItem, project: {...newItem.project, title: e.target.value}})} />
                                         <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-16 mb-2" placeholder="Desc" value={newItem.project.desc} onChange={e => setNewItem({...newItem, project: {...newItem.project, desc: e.target.value}})} />
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Link" value={newItem.project.link} onChange={e => setNewItem({...newItem, project: {...newItem.project, link: e.target.value}})} />
                                         <button onClick={handleProjectSubmit} className="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded text-xs font-bold mb-4">{editingProjectIndex !== null ? 'Update Project' : 'Add Project'}</button>
-                                        <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Existing Projects ({editLang})</h5>
+                                        <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Existing Projects</h5>
                                         <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                                            {currentLangData.projects.map((p, i) => (
+                                            {content.projects.map((p, i) => (
                                                 <div key={i} className={`flex justify-between items-center bg-slate-900 p-2 rounded text-xs ${editingProjectIndex === i ? 'border border-blue-500' : ''}`}><span className="truncate flex-1">{p.title}</span><div className="flex gap-2 ml-2"><button onClick={() => editProject(i)} className="text-blue-400 hover:text-blue-300"><i className="fas fa-pencil-alt"></i></button><button onClick={() => removeProject(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button></div></div>
                                             ))}
                                         </div>
                                     </div>
-                                    {/* Blog, Gallery blocks following same pattern */}
                                     <div className="p-3 bg-slate-800 rounded-lg">
                                         <div className="flex justify-between items-center mb-2"><h4 className="text-sm font-bold text-green-400">{editingBlogIndex !== null ? 'Edit Blog' : 'Add Blog'}</h4>{editingBlogIndex !== null && <button onClick={cancelEditBlog} className="text-xs text-slate-500 hover:text-white">Cancel</button>}</div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Title" value={newItem.blog.title} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, title: e.target.value}})} />
                                         <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-20 mb-2" placeholder="Content" value={newItem.blog.content} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, content: e.target.value}})} />
                                         <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-16 mb-2" placeholder="Image Filenames (one per line)" value={newItem.blog.images} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, images: e.target.value}})} />
+                                        <p className="text-[9px] text-slate-500 mb-2">Upload files with these names to your GitHub repo.</p>
                                         <button onClick={handleBlogSubmit} className="w-full bg-green-600 hover:bg-green-500 py-2 rounded text-xs font-bold mb-4">{editingBlogIndex !== null ? 'Update Post' : 'Publish Post'}</button>
-                                        <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Recent Posts ({editLang})</h5>
+                                        <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Recent Posts</h5>
                                         <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                                            {currentLangData.blog.map((p, i) => (
+                                            {content.blog.map((p, i) => (
                                                 <div key={i} className={`flex justify-between items-center bg-slate-900 p-2 rounded text-xs ${editingBlogIndex === i ? 'border border-green-500' : ''}`}><span className="truncate flex-1">{p.title}</span><div className="flex gap-2 ml-2"><button onClick={() => editBlog(i)} className="text-green-400 hover:text-green-300"><i className="fas fa-pencil-alt"></i></button><button onClick={() => removeBlog(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button></div></div>
                                             ))}
                                         </div>
@@ -653,7 +946,7 @@
                                         <button onClick={handlePhotoSubmit} className="w-full bg-pink-600 hover:bg-pink-500 py-2 rounded text-xs font-bold mb-4">{editingPhotoIndex !== null ? 'Update Photo' : 'Add to Gallery'}</button>
                                         <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Gallery Items</h5>
                                         <div className="grid grid-cols-3 gap-2">
-                                            {currentLangData.gallery.map((img, i) => (
+                                            {content.gallery.map((img, i) => (
                                                 <div key={i} className={`relative group aspect-square bg-slate-900 rounded overflow-hidden ${editingPhotoIndex === i ? 'border-2 border-pink-500' : ''}`}><img src={img.url} className="w-full h-full object-cover" /><div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2"><button onClick={() => editPhoto(i)} className="text-pink-400 hover:text-white"><i className="fas fa-pencil-alt"></i></button><button onClick={() => removePhoto(i)} className="text-red-500 hover:text-white"><i className="fas fa-trash"></i></button></div><div className="absolute bottom-0 w-full bg-black/50 text-[8px] text-center p-0.5 truncate">{img.url}</div></div>
                                             ))}
                                         </div>
@@ -671,44 +964,65 @@
                                         <div className="flex gap-2 items-center mb-2"><input className="bg-slate-900 p-2 rounded text-xs flex-1" placeholder="Icon Class (fab fa-twitter)" value={newItem.social.icon} onChange={e => setNewItem({...newItem, social: {...newItem.social, icon: e.target.value}})} /><div className="w-8 h-8 flex items-center justify-center bg-slate-700 rounded"><i className={newItem.social.icon}></i></div></div>
                                         <button onClick={addSocial} className="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded text-xs font-bold mb-4">Add Link</button>
                                         <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Links</h5>
-                                        <div className="space-y-2">{currentLangData.social && currentLangData.social.map((s, i) => (<div key={i} className="flex justify-between items-center bg-slate-900 p-2 rounded text-xs"><div className="flex items-center gap-2"><i className={s.icon}></i><span>{s.platform}</span></div><button onClick={() => removeSocial(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button></div>))}</div>
+                                        <div className="space-y-2">{content.social && content.social.map((s, i) => (<div key={i} className="flex justify-between items-center bg-slate-900 p-2 rounded text-xs"><div className="flex items-center gap-2"><i className={s.icon}></i><span>{s.platform}</span></div><button onClick={() => removeSocial(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button></div>))}</div>
                                     </div>
                                 </div>
                             )}
 
                             {activeTab === 'store' && (
                                 <div className="space-y-4">
-                                    <h3 className="font-bold text-slate-300">Store Products ({editLang.toUpperCase()})</h3>
+                                    <h3 className="font-bold text-slate-300">Store Products</h3>
                                     <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
-                                        <div className="flex justify-between items-center mb-2"><h4 className="text-sm font-bold text-yellow-400">{editingStoreIndex !== null ? 'Edit Product' : 'Add Product'}</h4>{editingStoreIndex !== null && <button onClick={cancelEditStore} className="text-xs text-slate-500 hover:text-white">Cancel</button>}</div>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="text-sm font-bold text-yellow-400">{editingStoreIndex !== null ? 'Edit Product' : 'Add Product'}</h4>
+                                            {editingStoreIndex !== null && <button onClick={cancelEditStore} className="text-xs text-slate-500 hover:text-white">Cancel</button>}
+                                        </div>
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Product Name" value={newItem.store.title} onChange={e => setNewItem({...newItem, store: {...newItem.store, title: e.target.value}})} />
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Price (e.g. $19.99)" value={newItem.store.price} onChange={e => setNewItem({...newItem, store: {...newItem.store, price: e.target.value}})} />
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Image Filename" value={newItem.store.image} onChange={e => setNewItem({...newItem, store: {...newItem.store, image: e.target.value}})} />
                                         <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-16 mb-2" placeholder="Description" value={newItem.store.description} onChange={e => setNewItem({...newItem, store: {...newItem.store, description: e.target.value}})} />
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Payment Link" value={newItem.store.link} onChange={e => setNewItem({...newItem, store: {...newItem.store, link: e.target.value}})} />
                                         <button onClick={handleStoreSubmit} className="w-full bg-yellow-600 hover:bg-yellow-500 py-2 rounded text-xs font-bold mb-4 text-slate-900">{editingStoreIndex !== null ? 'Update Product' : 'Add Product'}</button>
+
                                         <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Inventory</h5>
                                         <div className="space-y-2">
-                                            {currentLangData.store && currentLangData.store.map((item, i) => (
-                                                <div key={i} className={`flex justify-between items-center bg-slate-900 p-2 rounded text-xs ${editingStoreIndex === i ? 'border border-yellow-500' : ''}`}><span className="truncate flex-1">{item.title}</span><div className="flex gap-2 ml-2"><button onClick={() => editStore(i)} className="text-yellow-400 hover:text-yellow-300"><i className="fas fa-pencil-alt"></i></button><button onClick={() => removeStore(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button></div></div>
+                                            {content.store && content.store.map((item, i) => (
+                                                <div key={i} className={`flex justify-between items-center bg-slate-900 p-2 rounded text-xs ${editingStoreIndex === i ? 'border border-yellow-500' : ''}`}>
+                                                    <span className="truncate flex-1">{item.title}</span>
+                                                    <div className="flex gap-2 ml-2">
+                                                        <button onClick={() => editStore(i)} className="text-yellow-400 hover:text-yellow-300"><i className="fas fa-pencil-alt"></i></button>
+                                                        <button onClick={() => removeStore(i)} className="text-red-500 hover:text-red-400"><i className="fas fa-trash"></i></button>
+                                                    </div>
+                                                </div>
                                             ))}
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                             {activeTab === 'embed' && (
+                            {activeTab === 'embed' && (
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-slate-300">Custom Embed</h3>
                                     <p className="text-xs text-slate-500">Add custom HTML, iframes (YouTube, Maps), or widgets here.</p>
-                                    <div><label className="text-xs text-slate-500">Section Title (Optional)</label><input className="w-full bg-slate-900 p-2 rounded text-sm" value={currentLangData.custom.title} onChange={e => updateContent('custom', 'title', e.target.value)} /></div>
-                                    <div><label className="text-xs text-slate-500">HTML Code</label><textarea className="w-full bg-slate-900 p-2 rounded text-sm h-64 font-mono text-xs" placeholder="<iframe src='...'></iframe>" value={currentLangData.custom.code} onChange={e => updateContent('custom', 'code', e.target.value)}></textarea></div>
+                                    <div>
+                                        <label className="text-xs text-slate-500">Section Title (Optional)</label>
+                                        <input className="w-full bg-slate-900 p-2 rounded text-sm" value={content.custom.title} onChange={e => updateContent('custom', 'title', e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-slate-500">HTML Code</label>
+                                        <textarea 
+                                            className="w-full bg-slate-900 p-2 rounded text-sm h-64 font-mono text-xs" 
+                                            placeholder="<iframe src='...'></iframe>" 
+                                            value={content.custom.code} 
+                                            onChange={e => updateContent('custom', 'code', e.target.value)}
+                                        ></textarea>
+                                    </div>
                                 </div>
                             )}
+
                         </div>
                     </div>
-                    {/* Preview Section */}
-                     <div className="flex-1 flex flex-col h-full bg-black">
+                    <div className="flex-1 flex flex-col h-full bg-black">
                         <div className="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4">
                             <div className="flex items-center gap-2">
                                 <button onClick={() => setViewMode('preview')} className={`px-3 py-1 rounded text-sm ${viewMode === 'preview' ? 'bg-slate-700' : ''}`}>Preview</button>
@@ -716,7 +1030,9 @@
                             </div>
                             <div className="flex gap-2">
                                 <button onClick={copyToClipboard} className="bg-green-600 px-3 py-1 rounded text-sm font-bold">{showCopySuccess ? 'Copied!' : 'Copy Code'}</button>
-                                <button onClick={downloadHtmlFile} className="bg-blue-600 px-3 py-1 rounded text-sm font-bold flex items-center gap-2"><i className="fas fa-download"></i> Download .html</button>
+                                <button onClick={downloadHtmlFile} className="bg-blue-600 px-3 py-1 rounded text-sm font-bold flex items-center gap-2">
+                                    <i className="fas fa-download"></i> Download .html
+                                </button>
                             </div>
                         </div>
                         <div className="flex-1 relative overflow-hidden">

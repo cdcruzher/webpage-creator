@@ -254,14 +254,35 @@
                     setCopiedIndex(index);
                     setTimeout(() => setCopiedIndex(null), 2000);
 
-                    if (navigator.clipboard && window.isSecureContext) {
-                        navigator.clipboard.writeText(url).catch(() => prompt("Copy this link to share:", url));
-                    } else {
-                        prompt("Copy this link to share:", url);
-                    }
-                } catch (err) {
-                    console.error(err);
-                }
+                    // Safe Copy Function (Robust)
+                    const copyText = (text) => {
+                        if (navigator.clipboard && window.isSecureContext) {
+                            navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+                        } else {
+                            fallbackCopy(text);
+                        }
+                    };
+
+                    const fallbackCopy = (text) => {
+                        try {
+                            const textArea = document.createElement("textarea");
+                            textArea.value = text;
+                            textArea.style.position = "fixed";
+                            textArea.style.left = "-9999px";
+                            textArea.style.top = "0";
+                            document.body.appendChild(textArea);
+                            textArea.focus();
+                            textArea.select();
+                            const successful = document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            if (successful) return true;
+                        } catch (err) { console.error(err); }
+                        // If silent copy fails (rare), maybe show an alert or just do nothing (no blank page)
+                        return false;
+                    };
+
+                    copyText(url);
+                } catch (err) { console.error(err); }
             };
             
             return (
@@ -546,16 +567,16 @@
                 blog: { title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'Update', images: '' },
                 photo: { url: '', link: '' },
                 social: { platform: '', link: '', icon: 'fab fa-twitter' },
-                store: { title: '', price: '', image: '', link: '', description: '' } 
+                store: { title: '', price: '', image: '', link: '', description: '' } // Store Item
             });
 
             // Edit Modes
             const [editingProjectIndex, setEditingProjectIndex] = useState(null);
             const [editingBlogIndex, setEditingBlogIndex] = useState(null);
             const [editingPhotoIndex, setEditingPhotoIndex] = useState(null);
-            const [editingStoreIndex, setEditingStoreIndex] = useState(null); 
+            const [editingStoreIndex, setEditingStoreIndex] = useState(null); // Store Edit Mode
 
-            // --- IMPORT FUNCTION ---
+            // --- IMPORT FUNCTION (File) ---
             const handleFileUpload = (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -568,6 +589,7 @@
                 reader.readAsText(file);
             };
 
+            // --- IMPORT FUNCTION (Paste) ---
             const handlePasteImport = () => {
                 if (!pasteContent) return;
                 processImportedHtml(pasteContent);
@@ -575,6 +597,7 @@
                 setPasteContent('');
             }
 
+            // Common Import Logic
             const processImportedHtml = (html) => {
                 const regex = /const DATA = ({[\s\S]*?});/;
                 const match = html.match(regex);
@@ -589,24 +612,20 @@
                             });
                         }
                         
-                        // Handle structure
-                        if (importedData.en && importedData.es) {
-                            // If user uploads bilingual file, just take EN
-                            setContent(importedData.en);
-                        } else {
-                            // Assume flat structure
-                            if (!importedData.social) importedData.social = [];
-                            if (!importedData.store) importedData.store = [];
-                            if (!importedData.config.logoVideo) importedData.config.logoVideo = '';
-                            if (!importedData.custom) importedData.custom = { title: '', code: '' };
-                            setContent(importedData);
-                        }
+                        // Ensure structure is compatible with updates
+                        if (!importedData.social) importedData.social = [];
+                        if (!importedData.store) importedData.store = [];
+                        if (!importedData.config.logoVideo) importedData.config.logoVideo = '';
+                        if (!importedData.custom) importedData.custom = { title: '', code: '' };
                         
-                        // Force update
+                        setContent(importedData);
+                        
+                        // Force immediate update to state AND debounced HTML
+                        // Use isPreview=true initially so user sees effect immediately
                         const code = generateSiteCode({
-                            primaryColor: importedData.config?.primaryColor || '#8b5cf6',
-                            accentColor: importedData.config?.accentColor || '#06b6d4'
-                        }, importedData.en ? importedData.en : importedData, true);
+                            primaryColor: importedData.config.primaryColor,
+                            accentColor: importedData.config.accentColor || '#06b6d4'
+                        }, importedData, true);
                         
                         setDebouncedHtml(code);
                         setRevision(r => r + 1); 
@@ -621,7 +640,7 @@
 
             // --- DOWNLOAD FUNCTION ---
             const downloadHtmlFile = () => {
-                const htmlContent = debouncedHtml || generateSiteCode(globalData, content, false);
+                const htmlContent = debouncedHtml || generateSiteCode(globalData, content, false); // Use production code
                 const blob = new Blob([htmlContent], { type: 'text/html' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -652,6 +671,7 @@
                 }
             }, [activeTab, viewMode, debouncedHtml]);
 
+            // Generate HTML Code immediately
             const currentHtml = generateSiteCode(globalData, content, false);
 
             // --- ACTIONS ---
@@ -667,18 +687,17 @@
             // Projects
             const handleProjectSubmit = () => {
                 if(!newItem.project.title) return;
+                let newContent;
                 if (editingProjectIndex !== null) {
-                    setContent(prev => {
-                        const updated = [...prev.projects];
-                        updated[editingProjectIndex] = newItem.project;
-                        return { ...prev, projects: updated };
-                    });
+                    newContent = { ...content, projects: [...content.projects] };
+                    newContent.projects[editingProjectIndex] = newItem.project;
                     setEditingProjectIndex(null);
                     alert("Project Updated!");
                 } else {
-                    setContent(prev => ({ ...prev, projects: [newItem.project, ...prev.projects] }));
+                    newContent = { ...content, projects: [newItem.project, ...content.projects] };
                     alert("Project Added!");
                 }
+                setContent(newContent);
                 setNewItem(prev => ({ ...prev, project: { title: '', desc: '', link: '', icon: 'fas fa-code' } }));
                 setDebouncedHtml(null); setRevision(r => r + 1);
             };
@@ -688,7 +707,9 @@
             };
             const removeProject = (index) => {
                 if(!confirm("Delete this project?")) return;
-                setContent(prev => ({ ...prev, projects: prev.projects.filter((_, i) => i !== index) }));
+                const newProjects = content.projects.filter((_, i) => i !== index);
+                const newContent = { ...content, projects: newProjects };
+                setContent(newContent);
                 setDebouncedHtml(null); setRevision(r => r + 1);
             };
             const cancelEditProject = () => {
@@ -699,21 +720,21 @@
             // Blogs
             const handleBlogSubmit = () => {
                 if(!newItem.blog.title) return;
+                
                 const imageList = newItem.blog.images ? newItem.blog.images.split('\n').map(l => l.trim()).filter(l => l.length > 0) : [];
                 const blogData = { ...newItem.blog, images: imageList };
 
+                let newContent;
                 if (editingBlogIndex !== null) {
-                    setContent(prev => {
-                        const updated = [...prev.blog];
-                        updated[editingBlogIndex] = blogData;
-                        return { ...prev, blog: updated };
-                    });
+                    newContent = { ...content, blog: [...content.blog] };
+                    newContent.blog[editingBlogIndex] = blogData;
                     setEditingBlogIndex(null);
                     alert("Blog Updated!");
                 } else {
-                    setContent(prev => ({ ...prev, blog: [blogData, ...prev.blog] }));
+                    newContent = { ...content, blog: [blogData, ...content.blog] };
                     alert("Blog Published!");
                 }
+                setContent(newContent);
                 setNewItem(prev => ({ ...prev, blog: { title: '', content: '', date: '', category: 'Update', images: '' } }));
                 setDebouncedHtml(null); setRevision(r => r + 1);
             };
@@ -725,7 +746,9 @@
             };
             const removeBlog = (index) => {
                 if(!confirm("Delete this post?")) return;
-                setContent(prev => ({ ...prev, blog: prev.blog.filter((_, i) => i !== index) }));
+                const newBlog = content.blog.filter((_, i) => i !== index);
+                const newContent = { ...content, blog: newBlog };
+                setContent(newContent);
                 setDebouncedHtml(null); setRevision(r => r + 1);
             };
              const cancelEditBlog = () => {
@@ -736,18 +759,17 @@
             // Photos
             const handlePhotoSubmit = () => {
                 if(!newItem.photo.url) return;
+                let newContent;
                  if (editingPhotoIndex !== null) {
-                    setContent(prev => {
-                        const updated = [...prev.gallery];
-                        updated[editingPhotoIndex] = newItem.photo;
-                        return { ...prev, gallery: updated };
-                    });
+                    newContent = { ...content, gallery: [...content.gallery] };
+                    newContent.gallery[editingPhotoIndex] = newItem.photo;
                     setEditingPhotoIndex(null);
                     alert("Photo Updated!");
                 } else {
-                    setContent(prev => ({ ...prev, gallery: [newItem.photo, ...prev.gallery] }));
+                    newContent = { ...content, gallery: [newItem.photo, ...content.gallery] };
                     alert("Photo Added!");
                 }
+                setContent(newContent);
                 setNewItem(prev => ({ ...prev, photo: { url: '', link: '' } }));
                 setDebouncedHtml(null); setRevision(r => r + 1);
             };
@@ -757,7 +779,9 @@
             };
             const removePhoto = (index) => {
                 if(!confirm("Delete this photo?")) return;
-                setContent(prev => ({ ...prev, gallery: prev.gallery.filter((_, i) => i !== index) }));
+                const newGallery = content.gallery.filter((_, i) => i !== index);
+                const newContent = { ...content, gallery: newGallery };
+                setContent(newContent);
                 setDebouncedHtml(null); setRevision(r => r + 1);
             };
              const cancelEditPhoto = () => {
@@ -771,8 +795,8 @@
                 const currentSocial = content.social || [];
                 const newContent = { ...content, social: [...currentSocial, newItem.social] };
                 setContent(newContent);
-                setNewItem(prev => ({ ...prev, social: { platform: '', link: '', icon: 'fab fa-twitter' } }));
                 setDebouncedHtml(null); setRevision(r => r + 1);
+                setNewItem(prev => ({ ...prev, social: { platform: '', link: '', icon: 'fab fa-twitter' } }));
                 alert("Social Link Added!");
             };
             const removeSocial = (index) => {
@@ -782,22 +806,22 @@
                 setDebouncedHtml(null); setRevision(r => r + 1);
             };
 
-            // Store
+            // --- STORE ACTIONS ---
             const handleStoreSubmit = () => {
                 if(!newItem.store.title) return;
+                let newContent;
                 if (editingStoreIndex !== null) {
-                    setContent(prev => {
-                        const updated = [...prev.store];
-                        updated[editingStoreIndex] = newItem.store;
-                        return { ...prev, store: updated };
-                    });
+                    newContent = { ...content, store: [...content.store] };
+                    newContent.store[editingStoreIndex] = newItem.store;
                     setEditingStoreIndex(null);
                     alert("Product Updated!");
                 } else {
+                    // Check if store array exists
                     const currentStore = content.store || [];
-                    setContent(prev => ({ ...prev, store: [newItem.store, ...currentStore] }));
+                    newContent = { ...content, store: [newItem.store, ...currentStore] };
                     alert("Product Added!");
                 }
+                setContent(newContent);
                 setNewItem(prev => ({ ...prev, store: { title: '', price: '', image: '', link: '', description: '' } }));
                 setDebouncedHtml(null); setRevision(r => r + 1);
             };
@@ -807,13 +831,16 @@
             };
             const removeStore = (index) => {
                 if(!confirm("Delete this product?")) return;
-                setContent(prev => ({ ...prev, store: prev.store.filter((_, i) => i !== index) }));
+                const newStore = content.store.filter((_, i) => i !== index);
+                const newContent = { ...content, store: newStore };
+                setContent(newContent);
                 setDebouncedHtml(null); setRevision(r => r + 1);
             };
              const cancelEditStore = () => {
                 setNewItem(prev => ({ ...prev, store: { title: '', price: '', image: '', link: '', description: '' } }));
                 setEditingStoreIndex(null);
             }
+
 
             const copyToClipboard = () => {
                 const textArea = document.createElement("textarea");
@@ -874,6 +901,7 @@
                             ))}
                         </div>
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            {/* ... (Previous Tabs: global, home, about, data preserved) ... */}
                             {activeTab === 'global' && (
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-slate-300">Global</h3>
@@ -1028,12 +1056,10 @@
                                 <button onClick={() => setViewMode('preview')} className={`px-3 py-1 rounded text-sm ${viewMode === 'preview' ? 'bg-slate-700' : ''}`}>Preview</button>
                                 <button onClick={() => setViewMode('code')} className={`px-3 py-1 rounded text-sm ${viewMode === 'code' ? 'bg-slate-700' : ''}`}>Code</button>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={copyToClipboard} className="bg-green-600 px-3 py-1 rounded text-sm font-bold">{showCopySuccess ? 'Copied!' : 'Copy Code'}</button>
-                                <button onClick={downloadHtmlFile} className="bg-blue-600 px-3 py-1 rounded text-sm font-bold flex items-center gap-2">
-                                    <i className="fas fa-download"></i> Download .html
-                                </button>
-                            </div>
+                            <button onClick={copyToClipboard} className="bg-green-600 px-3 py-1 rounded text-sm font-bold">{showCopySuccess ? 'Copied!' : 'Copy Code'}</button>
+                            <button onClick={downloadHtmlFile} className="bg-blue-600 px-3 py-1 rounded text-sm font-bold flex items-center gap-2">
+                                <i className="fas fa-download"></i> Download .html
+                            </button>
                         </div>
                         <div className="flex-1 relative overflow-hidden">
                             {viewMode === 'preview' ? (

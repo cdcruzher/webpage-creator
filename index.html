@@ -87,8 +87,6 @@
         const Icon = ({ name, size = 20, className }) => <i data-lucide={name} width={size} height={size} className={className}></i>;
 
         const NavBar = ({ setView, view }) => {
-            const [isMenuOpen, setIsMenuOpen] = useState(false);
-
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
             const t = DATA.nav;
             const logoSrc = DATA.config.logoImage || "https://ui-avatars.com/api/?name=CD&background=6366f1&color=fff&size=128";
@@ -122,25 +120,8 @@
                                 </button>
                             ))}
                         </div>
-                        <div className="md:hidden text-slate-300 cursor-pointer p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                            <Icon name={isMenuOpen ? "x" : "menu"} />
-                        </div>
+                        <div className="md:hidden text-slate-300"><Icon name="menu" /></div>
                     </div>
-
-                    {/* Mobile Menu Dropdown */}
-                    {isMenuOpen && (
-                        <div className="md:hidden absolute top-20 left-0 w-full glass-card border-t border-white/10 p-4 flex flex-col gap-2 animate-fade-in shadow-2xl">
-                             {['home', 'portfolio', 'about', 'blog', 'gallery', 'store'].map(item => (
-                                <button 
-                                    key={item} 
-                                    onClick={() => { setView(item); setIsMenuOpen(false); }} 
-                                    className={\`text-left px-4 py-3 rounded-xl font-medium transition-all \${view === item ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}\`}
-                                >
-                                    {t[item] || item}
-                                </button>
-                            ))}
-                        </div>
-                    )}
                 </nav>
             );
         };
@@ -149,7 +130,6 @@
             <section id="home" className="pt-24 pb-4 px-6 text-center animate-fade-in">
                 <div className="max-w-3xl mx-auto flex flex-col items-center">
                     
-                    {/* Social Icons */}
                     <div className="flex gap-6 mb-8 animate-fade-in" style={{animationDelay: '0.1s'}}>
                         {social && social.map((item, i) => (
                             <a key={i} href={item.link} target="_blank" className="text-slate-400 hover:text-white transition-all transform hover:scale-110">
@@ -216,7 +196,6 @@
             </section>
         );
 
-        // --- CUSTOM EMBED SECTION ---
         const CustomSection = ({ data }) => {
             if (!data || !data.code) return null;
             return (
@@ -231,6 +210,15 @@
 
         const Blog = ({ posts, setView, isHome }) => {
             const displayPosts = isHome ? posts.slice(0, 1) : posts;
+            const [copiedIndex, setCopiedIndex] = useState(null);
+
+            const handleShare = (title, index) => {
+                const url = window.location.href.split('?')[0] + '?post=' + encodeURIComponent(title);
+                navigator.clipboard.writeText(url).then(() => {
+                    setCopiedIndex(index);
+                    setTimeout(() => setCopiedIndex(null), 2000);
+                });
+            };
             
             return (
                 <section id="blog" className={\`px-6 \${isHome ? 'py-20' : 'min-h-screen pt-32 pb-20 animate-fade-in'}\`}>
@@ -249,9 +237,18 @@
                         </div>
                         <div className="space-y-6">
                             {displayPosts.map((post, i) => (
-                                <article key={i} className="glass-card p-8 rounded-3xl hover:border-purple-500/30 transition-colors">
-                                    <div className="flex items-center gap-3 text-xs text-slate-400 mb-4 font-mono">
-                                        <span className="text-purple-400 bg-purple-500/10 px-2 py-1 rounded">{post.category}</span><span>•</span><span>{new Date(post.date).toLocaleDateString()}</span>
+                                <article key={i} id={\`post-\${i}\`} className="glass-card p-8 rounded-3xl hover:border-purple-500/30 transition-colors relative">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
+                                            <span className="text-purple-400 bg-purple-500/10 px-2 py-1 rounded">{post.category}</span><span>•</span><span>{new Date(post.date).toLocaleDateString()}</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => handleShare(post.title, i)} 
+                                            className="text-slate-500 hover:text-white transition-colors" 
+                                            title="Share this post"
+                                        >
+                                            {copiedIndex === i ? <span className="text-green-400 text-xs font-bold">Copied!</span> : <Icon name="share-2" size={18} />}
+                                        </button>
                                     </div>
                                     <h3 className="text-2xl font-bold mb-4 text-slate-100">{post.title}</h3>
                                     {post.images && post.images.length > 0 && (
@@ -367,6 +364,7 @@
             const [view, setView] = useState('home');
 
             useEffect(() => {
+                // Handle Post Message (Scroll / Lang)
                 const handleMessage = (event) => {
                     if (event.data && event.data.type === 'SCROLL_TO') {
                         const id = event.data.id;
@@ -375,13 +373,27 @@
                         } else {
                             const el = document.getElementById(id);
                             if (el) el.scrollIntoView({ behavior: 'smooth' });
-                            // If user clicks Store tab in admin, switch view to store
                             if (id === 'store') setView('store');
-                             // If user clicks Blog tab in admin, switch view to blog page (optional, but consistent with store)
                             if (id === 'blog') setView('blog'); 
                         }
                     }
                 };
+                
+                // Handle URL Parameters (Sharing)
+                const params = new URLSearchParams(window.location.search);
+                const postTitle = params.get('post');
+                if (postTitle) {
+                    setView('blog');
+                    // Wait for render then scroll
+                    setTimeout(() => {
+                        const postIndex = DATA.blog.findIndex(p => p.title === postTitle);
+                        if (postIndex !== -1) {
+                            const el = document.getElementById(\`post-\${postIndex}\`);
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 500);
+                }
+
                 window.addEventListener('message', handleMessage);
                 return () => window.removeEventListener('message', handleMessage);
             }, []);
@@ -390,7 +402,7 @@
                 if (window.lucide) window.lucide.createIcons();
             });
 
-            // Exclusive Store View
+            // Exclusive Views
             if (view === 'store') {
                 return (
                     <div className="bg-slate-950 min-h-screen">
@@ -403,8 +415,6 @@
                     </div>
                 );
             }
-            
-            // Exclusive Blog View
              if (view === 'blog') {
                 return (
                     <div className="bg-slate-950 min-h-screen">
@@ -548,6 +558,7 @@
                         setContent(importedData);
                         
                         // Force immediate update to state AND debounced HTML
+                        // Use isPreview=true initially so user sees effect immediately
                         const code = generateSiteCode({
                             primaryColor: importedData.config.primaryColor,
                             accentColor: importedData.config.accentColor || '#06b6d4'

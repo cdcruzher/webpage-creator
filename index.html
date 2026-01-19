@@ -70,6 +70,9 @@
             border-radius: 1rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
+        .goog-te-banner-frame { display: none !important; }
+        body { top: 0 !important; }
+        #google_translate_element { visibility: hidden; position: absolute; top: -9999px; }
     </style>
     <script>
         tailwind.config = {
@@ -127,6 +130,14 @@
                                     {t[item] || item}
                                 </button>
                             ))}
+                            <div className="ml-4 h-6 w-px bg-slate-700"></div>
+                            <button 
+                                onClick={() => window.toggleLanguage()} 
+                                className="flex items-center gap-2 text-xs font-bold bg-slate-800 border border-slate-700 hover:border-purple-500/50 text-slate-300 px-3 py-1.5 rounded-full transition-all ml-2"
+                                title="Switch Language"
+                            >
+                                <Icon name="globe" size={14} /> EN/ES
+                            </button>
                         </div>
                         <div className="md:hidden text-slate-300 cursor-pointer p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                             <Icon name={isMenuOpen ? "x" : "menu"} />
@@ -145,6 +156,12 @@
                                     {t[item] || item}
                                 </button>
                             ))}
+                            <button 
+                                onClick={() => { window.toggleLanguage(); setIsMenuOpen(false); }}
+                                className="text-left px-4 py-3 rounded-xl font-medium text-purple-400 hover:text-white hover:bg-white/5 flex items-center gap-2"
+                            >
+                                <Icon name="globe" size={16} /> Switch Language (EN/ES)
+                            </button>
                         </div>
                     )}
                 </nav>
@@ -155,7 +172,6 @@
             <section id="home" className="pt-24 pb-4 px-6 text-center animate-fade-in">
                 <div className="max-w-3xl mx-auto flex flex-col items-center">
                     
-                    {/* Social Icons */}
                     <div className="flex gap-6 mb-8 animate-fade-in" style={{animationDelay: '0.1s'}}>
                         {social && social.map((item, i) => (
                             <a key={i} href={item.link} target="_blank" className="text-slate-400 hover:text-white transition-all transform hover:scale-110">
@@ -222,7 +238,6 @@
             </section>
         );
 
-        // --- CUSTOM EMBED SECTION ---
         const CustomSection = ({ data }) => {
             if (!data || !data.code) return null;
             return (
@@ -237,19 +252,30 @@
 
         const Blog = ({ posts, setView, isHome }) => {
             const displayPosts = isHome ? posts.slice(0, 1) : posts;
-            
-            const handleShare = (e, title) => {
+            const [copiedIndex, setCopiedIndex] = useState(null);
+
+            const handleShare = (e, title, index) => {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                let baseUrl = window.location.href.split('?')[0];
-                if (!baseUrl || baseUrl === 'about:srcdoc' || baseUrl.startsWith('blob:')) {
-                     baseUrl = 'https://your-site.com';
+                try {
+                    let baseUrl = window.location.href.split('?')[0];
+                    if (!baseUrl || baseUrl === 'about:srcdoc' || baseUrl.startsWith('blob:')) {
+                         baseUrl = 'https://your-site.com';
+                    }
+                    const url = baseUrl + '?post=' + encodeURIComponent(title);
+                    
+                    setCopiedIndex(index);
+                    setTimeout(() => setCopiedIndex(null), 2000);
+
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(url).catch(() => prompt("Copy this link to share:", url));
+                    } else {
+                        prompt("Copy this link to share:", url);
+                    }
+                } catch (err) {
+                    console.error(err);
                 }
-                const url = baseUrl + '?post=' + encodeURIComponent(title);
-                
-                // Simple prompt display for manual copying - 100% reliable
-                prompt("Copy this link to share:", url);
             };
             
             return (
@@ -276,11 +302,11 @@
                                         </div>
                                         <button 
                                             type="button" 
-                                            onClick={(e) => handleShare(e, post.title)} 
+                                            onClick={(e) => handleShare(e, post.title, i)} 
                                             className="text-slate-500 hover:text-white transition-colors p-2 rounded hover:bg-white/5 z-10" 
                                             title="Share link"
                                         >
-                                            <Icon name="share-2" size={18} />
+                                            {copiedIndex === i ? <span className="text-green-400 text-xs font-bold animate-fade-in">Copied!</span> : <Icon name="share-2" size={18} />}
                                         </button>
                                     </div>
                                     <h3 className="text-2xl font-bold mb-4 text-slate-100">{post.title}</h3>
@@ -397,7 +423,6 @@
             const [view, setView] = useState('home');
 
             useEffect(() => {
-                // Handle Post Message (Scroll / Lang)
                 const handleMessage = (event) => {
                     if (event.data && event.data.type === 'SCROLL_TO') {
                         const id = event.data.id;
@@ -492,6 +517,37 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     <\/script>
+    
+    <!-- Google Translate Script (Hidden) -->
+    <div id="google_translate_element"></div>
+    <script>
+        // Language Toggle Logic
+        window.currentLang = 'en';
+        window.toggleLanguage = function() {
+            var newLang = window.currentLang === 'en' ? 'es' : 'en';
+            
+            // Try to set Google Translate
+            var combo = document.querySelector('.goog-te-combo');
+            if (combo) {
+                combo.value = newLang;
+                combo.dispatchEvent(new Event('change'));
+            } else {
+                 // Fallback for demo or if GTranslate didn't load
+                 console.log("Switching language to: " + newLang);
+            }
+            window.currentLang = newLang;
+        }
+
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,es',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    <\/script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"><\/script>
 </body>
 </html>`;
         };

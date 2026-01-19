@@ -236,53 +236,20 @@
         };
 
         const Blog = ({ posts, setView, isHome }) => {
-            const safePosts = posts || [];
-            const displayPosts = isHome ? safePosts.slice(0, 1) : safePosts;
-            const [copiedIndex, setCopiedIndex] = useState(null);
-
-            const handleShare = (e, title, index) => {
+            const displayPosts = isHome ? posts.slice(0, 1) : posts;
+            
+            const handleShare = (e, title) => {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                try {
-                    let baseUrl = window.location.href.split('?')[0];
-                    if (!baseUrl || baseUrl === 'about:srcdoc' || baseUrl.startsWith('blob:')) {
-                         baseUrl = 'https://your-site.com';
-                    }
-                    const url = baseUrl + '?post=' + encodeURIComponent(title);
-                    
-                    setCopiedIndex(index);
-                    setTimeout(() => setCopiedIndex(null), 2000);
-
-                    // Safe Copy Function (Robust)
-                    const copyText = (text) => {
-                        if (navigator.clipboard && window.isSecureContext) {
-                            navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
-                        } else {
-                            fallbackCopy(text);
-                        }
-                    };
-
-                    const fallbackCopy = (text) => {
-                        try {
-                            const textArea = document.createElement("textarea");
-                            textArea.value = text;
-                            textArea.style.position = "fixed";
-                            textArea.style.left = "-9999px";
-                            textArea.style.top = "0";
-                            document.body.appendChild(textArea);
-                            textArea.focus();
-                            textArea.select();
-                            const successful = document.execCommand('copy');
-                            document.body.removeChild(textArea);
-                            if (successful) return true;
-                        } catch (err) { console.error(err); }
-                        // If silent copy fails (rare), maybe show an alert or just do nothing (no blank page)
-                        return false;
-                    };
-
-                    copyText(url);
-                } catch (err) { console.error(err); }
+                let baseUrl = window.location.href.split('?')[0];
+                if (!baseUrl || baseUrl === 'about:srcdoc' || baseUrl.startsWith('blob:')) {
+                     baseUrl = 'https://your-site.com';
+                }
+                const url = baseUrl + '?post=' + encodeURIComponent(title);
+                
+                // Simple prompt display for manual copying - 100% reliable
+                prompt("Copy this link to share:", url);
             };
             
             return (
@@ -309,11 +276,11 @@
                                         </div>
                                         <button 
                                             type="button" 
-                                            onClick={(e) => handleShare(e, post.title, i)} 
+                                            onClick={(e) => handleShare(e, post.title)} 
                                             className="text-slate-500 hover:text-white transition-colors p-2 rounded hover:bg-white/5 z-10" 
-                                            title="Copy link to clipboard"
+                                            title="Share link"
                                         >
-                                            {copiedIndex === i ? <span className="text-green-400 text-xs font-bold animate-fade-in">Copied!</span> : <Icon name="share-2" size={18} />}
+                                            <Icon name="share-2" size={18} />
                                         </button>
                                     </div>
                                     <h3 className="text-2xl font-bold mb-4 text-slate-100">{post.title}</h3>
@@ -341,7 +308,7 @@
                     <div className="max-w-6xl mx-auto text-center">
                         <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white inline-block"><span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">Visual Gallery</span></h2>
                         <div className="flex flex-wrap justify-center gap-4">
-                            {items && items.map((item, i) => (
+                            {items.map((item, i) => (
                                 <div key={i} onClick={() => setSelectedImg(item.url)} className="relative w-40 h-40 md:w-56 md:h-56 glass-card rounded-2xl overflow-hidden group cursor-pointer flex-shrink-0 transition-transform hover:scale-105">
                                     <img src={item.url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-80 group-hover:opacity-100" alt="Gallery" />
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -430,6 +397,7 @@
             const [view, setView] = useState('home');
 
             useEffect(() => {
+                // Handle Post Message (Scroll / Lang)
                 const handleMessage = (event) => {
                     if (event.data && event.data.type === 'SCROLL_TO') {
                         const id = event.data.id;
@@ -444,6 +412,7 @@
                     }
                 };
                 
+                // Handle URL Parameters (Sharing)
                 const params = new URLSearchParams(window.location.search);
                 const postTitle = params.get('post');
                 if (postTitle) {
@@ -541,7 +510,7 @@
                 { title: 'Hello World', content: 'Welcome to my new portfolio.', date: '2025-01-01', category: 'Update', images: [] }
             ],
             gallery: [],
-            store: [], 
+            store: [], // New Store Data
             social: [
                 { platform: 'Twitter', link: '#', icon: 'fab fa-twitter' },
                 { platform: 'GitHub', link: '#', icon: 'fab fa-github' }
@@ -959,7 +928,6 @@
                                         <input className="w-full bg-slate-900 p-2 rounded text-xs mb-2" placeholder="Title" value={newItem.blog.title} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, title: e.target.value}})} />
                                         <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-20 mb-2" placeholder="Content" value={newItem.blog.content} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, content: e.target.value}})} />
                                         <textarea className="w-full bg-slate-900 p-2 rounded text-xs h-16 mb-2" placeholder="Image Filenames (one per line)" value={newItem.blog.images} onChange={e => setNewItem({...newItem, blog: {...newItem.blog, images: e.target.value}})} />
-                                        <p className="text-[9px] text-slate-500 mb-2">Upload files with these names to your GitHub repo.</p>
                                         <button onClick={handleBlogSubmit} className="w-full bg-green-600 hover:bg-green-500 py-2 rounded text-xs font-bold mb-4">{editingBlogIndex !== null ? 'Update Post' : 'Publish Post'}</button>
                                         <h5 className="text-xs text-slate-500 font-bold uppercase mb-2">Recent Posts</h5>
                                         <div className="space-y-2 max-h-40 overflow-y-auto pr-1">

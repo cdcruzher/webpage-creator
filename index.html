@@ -87,6 +87,8 @@
         const Icon = ({ name, size = 20, className }) => <i data-lucide={name} width={size} height={size} className={className}></i>;
 
         const NavBar = ({ setView, view }) => {
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
             const t = DATA.nav;
             const logoSrc = DATA.config.logoImage || "https://ui-avatars.com/api/?name=CD&background=6366f1&color=fff&size=128";
@@ -120,8 +122,25 @@
                                 </button>
                             ))}
                         </div>
-                        <div className="md:hidden text-slate-300"><Icon name="menu" /></div>
+                        <div className="md:hidden text-slate-300 cursor-pointer p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                            <Icon name={isMenuOpen ? "x" : "menu"} />
+                        </div>
                     </div>
+
+                    {/* Mobile Menu Dropdown */}
+                    {isMenuOpen && (
+                        <div className="md:hidden absolute top-20 left-0 w-full glass-card border-t border-white/10 p-4 flex flex-col gap-2 animate-fade-in shadow-2xl">
+                             {['home', 'portfolio', 'about', 'blog', 'gallery', 'store'].map(item => (
+                                <button 
+                                    key={item} 
+                                    onClick={() => { setView(item); setIsMenuOpen(false); }} 
+                                    className={\`text-left px-4 py-3 rounded-xl font-medium transition-all \${view === item ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}\`}
+                                >
+                                    {t[item] || item}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </nav>
             );
         };
@@ -130,6 +149,7 @@
             <section id="home" className="pt-24 pb-4 px-6 text-center animate-fade-in">
                 <div className="max-w-3xl mx-auto flex flex-col items-center">
                     
+                    {/* Social Icons */}
                     <div className="flex gap-6 mb-8 animate-fade-in" style={{animationDelay: '0.1s'}}>
                         {social && social.map((item, i) => (
                             <a key={i} href={item.link} target="_blank" className="text-slate-400 hover:text-white transition-all transform hover:scale-110">
@@ -196,6 +216,7 @@
             </section>
         );
 
+        // --- CUSTOM EMBED SECTION ---
         const CustomSection = ({ data }) => {
             if (!data || !data.code) return null;
             return (
@@ -212,12 +233,38 @@
             const displayPosts = isHome ? posts.slice(0, 1) : posts;
             const [copiedIndex, setCopiedIndex] = useState(null);
 
-            const handleShare = (title, index) => {
-                const url = window.location.href.split('?')[0] + '?post=' + encodeURIComponent(title);
-                navigator.clipboard.writeText(url).then(() => {
-                    setCopiedIndex(index);
-                    setTimeout(() => setCopiedIndex(null), 2000);
-                });
+            const handleShare = (e, title, index) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                let baseUrl = window.location.href.split('?')[0];
+                if (baseUrl === 'about:srcdoc') baseUrl = 'https://your-site.com';
+                
+                const url = baseUrl + '?post=' + encodeURIComponent(title);
+                
+                const fallbackCopy = (text) => {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        setCopiedIndex(index);
+                        setTimeout(() => setCopiedIndex(null), 2000);
+                    } catch (err) {
+                        console.error('Copy failed', err);
+                    }
+                    document.body.removeChild(textArea);
+                };
+
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(url).then(() => {
+                        setCopiedIndex(index);
+                        setTimeout(() => setCopiedIndex(null), 2000);
+                    }).catch(err => fallbackCopy(url));
+                } else {
+                    fallbackCopy(url);
+                }
             };
             
             return (
@@ -243,11 +290,12 @@
                                             <span className="text-purple-400 bg-purple-500/10 px-2 py-1 rounded">{post.category}</span><span>•</span><span>{new Date(post.date).toLocaleDateString()}</span>
                                         </div>
                                         <button 
-                                            onClick={() => handleShare(post.title, i)} 
-                                            className="text-slate-500 hover:text-white transition-colors" 
-                                            title="Share this post"
+                                            type="button"
+                                            onClick={(e) => handleShare(e, post.title, i)} 
+                                            className="text-slate-500 hover:text-white transition-colors p-2 rounded hover:bg-white/5" 
+                                            title="Copy link to clipboard"
                                         >
-                                            {copiedIndex === i ? <span className="text-green-400 text-xs font-bold">Copied!</span> : <Icon name="share-2" size={18} />}
+                                            {copiedIndex === i ? <span className="text-green-400 text-xs font-bold animate-fade-in">Copied!</span> : <Icon name="share-2" size={18} />}
                                         </button>
                                     </div>
                                     <h3 className="text-2xl font-bold mb-4 text-slate-100">{post.title}</h3>
@@ -732,8 +780,8 @@
                 const currentSocial = content.social || [];
                 const newContent = { ...content, social: [...currentSocial, newItem.social] };
                 setContent(newContent);
-                setNewItem(prev => ({ ...prev, social: { platform: '', link: '', icon: 'fab fa-twitter' } }));
                 setDebouncedHtml(null); setRevision(r => r + 1);
+                setNewItem(prev => ({ ...prev, social: { platform: '', link: '', icon: 'fab fa-twitter' } }));
                 alert("Social Link Added!");
             };
             const removeSocial = (index) => {

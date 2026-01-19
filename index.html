@@ -64,6 +64,12 @@
         }
         .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Embed Handling */
+        .embed-content iframe, .embed-content video, .embed-content object {
+            max-width: 100%;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
     </style>
     <script>
         tailwind.config = {
@@ -231,40 +237,19 @@
 
         const Blog = ({ posts, setView, isHome }) => {
             const displayPosts = isHome ? posts.slice(0, 1) : posts;
-            const [copiedIndex, setCopiedIndex] = useState(null);
-
-            const handleShare = (e, title, index) => {
-                e.stopPropagation();
+            
+            const handleShare = (e, title) => {
                 e.preventDefault();
+                e.stopPropagation();
                 
                 let baseUrl = window.location.href.split('?')[0];
-                if (baseUrl === 'about:srcdoc') baseUrl = 'https://your-site.com';
-                
+                if (!baseUrl || baseUrl === 'about:srcdoc' || baseUrl.startsWith('blob:')) {
+                     baseUrl = 'https://your-site.com';
+                }
                 const url = baseUrl + '?post=' + encodeURIComponent(title);
                 
-                const fallbackCopy = (text) => {
-                    const textArea = document.createElement("textarea");
-                    textArea.value = text;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    try {
-                        document.execCommand('copy');
-                        setCopiedIndex(index);
-                        setTimeout(() => setCopiedIndex(null), 2000);
-                    } catch (err) {
-                        console.error('Copy failed', err);
-                    }
-                    document.body.removeChild(textArea);
-                };
-
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(url).then(() => {
-                        setCopiedIndex(index);
-                        setTimeout(() => setCopiedIndex(null), 2000);
-                    }).catch(err => fallbackCopy(url));
-                } else {
-                    fallbackCopy(url);
-                }
+                // Simple prompt display for manual copying - 100% reliable
+                prompt("Copy this link to share:", url);
             };
             
             return (
@@ -290,12 +275,12 @@
                                             <span className="text-purple-400 bg-purple-500/10 px-2 py-1 rounded">{post.category}</span><span>•</span><span>{new Date(post.date).toLocaleDateString()}</span>
                                         </div>
                                         <button 
-                                            type="button"
-                                            onClick={(e) => handleShare(e, post.title, i)} 
-                                            className="text-slate-500 hover:text-white transition-colors p-2 rounded hover:bg-white/5" 
-                                            title="Copy link to clipboard"
+                                            type="button" 
+                                            onClick={(e) => handleShare(e, post.title)} 
+                                            className="text-slate-500 hover:text-white transition-colors p-2 rounded hover:bg-white/5 z-10" 
+                                            title="Share link"
                                         >
-                                            {copiedIndex === i ? <span className="text-green-400 text-xs font-bold animate-fade-in">Copied!</span> : <Icon name="share-2" size={18} />}
+                                            <Icon name="share-2" size={18} />
                                         </button>
                                     </div>
                                     <h3 className="text-2xl font-bold mb-4 text-slate-100">{post.title}</h3>
@@ -432,7 +417,6 @@
                 const postTitle = params.get('post');
                 if (postTitle) {
                     setView('blog');
-                    // Wait for render then scroll
                     setTimeout(() => {
                         const postIndex = DATA.blog.findIndex(p => p.title === postTitle);
                         if (postIndex !== -1) {
